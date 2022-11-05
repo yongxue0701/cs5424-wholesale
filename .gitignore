@@ -4,3 +4,4 @@
 build/*
 inputs
 wholesale-ycql/target
+wholesale-ycql/out
