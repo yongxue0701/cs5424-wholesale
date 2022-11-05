@@ -52,7 +52,7 @@ public class PopularItemTransaction {
 
             percentage_statement = connection.prepareStatement(
                 MessageFormat.format(
-            "select i_name, cast(count(order_line.ol_o_id) as decimal) / {2} as percent\n" +
+            "select i_name, round( cast(count(order_line.ol_o_id) as decimal) / {2}, 4 ) as percent\n" +
                     "from order_line\n" +
                     "join (\n" +
                     "    select t.ol_o_id, t.ol_d_id, t.ol_w_id, max(ol_quantity) as max_ol_quantity\n" +
@@ -102,8 +102,8 @@ public class PopularItemTransaction {
 
             ResultSet result = data_statement.executeQuery();
             while (result.next()) {
-                String d_id = result.getString("order_line.ol_d_id");
-                String w_id = result.getString("order_line.ol_w_id");
+                String d_id = result.getString("ol_d_id");
+                String w_id = result.getString("ol_w_id");
                 String o_id = result.getString("o_id");
                 String o_entry_d = result.getString("o_entry_d");
                 String c_first = result.getString("c_first");
