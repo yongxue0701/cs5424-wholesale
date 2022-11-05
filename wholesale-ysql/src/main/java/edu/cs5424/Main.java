@@ -45,14 +45,14 @@ public class Main {
                         StockLevelTransaction transactionS = new StockLevelTransaction(conn, parameters);
                         transactionS.execute();
                         break;
-//                    case "I":
-//                        PopularItemTransaction transactionI = new PopularItemTransaction(conn, parameters);
-//                        transactionI.execute();
-//                        break;
-//                    case "T":
-//                        TopBalanceTransaction transactionT = new TopBalanceTransaction(conn, parameters);
-//                        transactionT.execute();
-//                        break;
+                    case "I":
+                        PopularItemTransaction transactionI = new PopularItemTransaction(conn, parameters);
+                        transactionI.execute();
+                        break;
+                    case "T":
+                        TopBalanceTransaction transactionT = new TopBalanceTransaction(conn, parameters);
+                        transactionT.execute();
+                        break;
                     case "R":
                         RelatedCustomerTransaction transactionR = new RelatedCustomerTransaction(conn, parameters);
                         transactionR.execute();
