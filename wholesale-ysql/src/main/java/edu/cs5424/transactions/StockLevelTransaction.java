@@ -24,8 +24,7 @@ public class StockLevelTransaction {
     private final int stockThreshold;
     private final int numOfLastOrders;
     private Connection conn = null;
-
-
+    
     public StockLevelTransaction(final Connection connection, final String[] parameters) {
         this.conn = connection;
         this.warehouseID = Integer.parseInt(parameters[1]);

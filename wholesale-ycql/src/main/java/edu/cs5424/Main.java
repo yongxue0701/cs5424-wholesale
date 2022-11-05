@@ -19,40 +19,41 @@ public class Main {
         System.out.println("session: " + session);
 
         try {
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/0.txt");    //creates a new file instance
+            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
 
             while (br.readLine() != null) {
                 String[] parameters = br.readLine().split(",");
+
                 switch (parameters[0]) {
 //                    case "N":
 //                        // Need to handle the multiple-line inputs!
-//                        NewOrderTransaction transactionN  = new NewOrderTransaction(conn, parameters);
+//                        NewOrderTransaction transactionN  = new NewOrderTransaction(session, parameters);
 //                        transactionR.execute();
 //                        break;
 //                    case "P":
-//                        PaymentTransaction transactionP = new PaymentTransaction(conn, parameters);
+//                        PaymentTransaction transactionP = new PaymentTransaction(session, parameters);
 //                        transactionP.execute();
 //                        break;
 //                    case "D":
-//                        DeliveryTransaction transactionD = new DeliveryTransaction(conn, parameters);
+//                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
 //                        transactionD.execute();
 //                        break;
-//                    case "O":
-//                        OrderStatusTransaction transactionO = new OrderStatusTransaction(conn, parameters);
-//                        transactionO.execute();
-//                        break;
-//                    case "S":
-//                        StockLevelTransaction transactionS = new StockLevelTransaction(conn, parameters);
-//                        transactionS.execute();
-//                        break;
+                    case "O":
+                        OrderStatusTransaction transactionO = new OrderStatusTransaction(session, parameters);
+                        transactionO.execute();
+                        break;
+                    case "S":
+                        StockLevelTransaction transactionS = new StockLevelTransaction(session, parameters);
+                        transactionS.execute();
+                        break;
 //                    case "I":
-//                        PopularItemTransaction transactionI = new PopularItemTransaction(conn, parameters);
+//                        PopularItemTransaction transactionI = new PopularItemTransaction(session, parameters);
 //                        transactionI.execute();
 //                        break;
 //                    case "T":
-//                        TopBalanceTransaction transactionT = new TopBalanceTransaction(conn, parameters);
+//                        TopBalanceTransaction transactionT = new TopBalanceTransaction(session, parameters);
 //                        transactionT.execute();
 //                        break;
                     case "R":
@@ -66,6 +67,8 @@ public class Main {
 
             fr.close();
             br.close();
+
+            System.out.println("End");
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
