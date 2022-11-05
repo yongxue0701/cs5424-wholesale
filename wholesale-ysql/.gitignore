@@ -1,6 +1,2 @@
 .DS_Store
-.idea/
-data/
-out/
-.gradle/
-build/
+.idea/*
