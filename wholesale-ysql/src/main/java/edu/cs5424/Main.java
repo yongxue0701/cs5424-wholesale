@@ -16,12 +16,13 @@ public class Main {
                 "root");
 
         try {
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/0.txt");    //creates a new file instance
+            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
+            String line;
 
-            while (br.readLine() != null) {
-                String[] parameters = br.readLine().split(",");
+            while ((line = br.readLine()) != null) {
+                String[] parameters = line.split(",");
                 switch (parameters[0]) {
 //                    case "N":
 //                        // Need to handle the multiple-line inputs!

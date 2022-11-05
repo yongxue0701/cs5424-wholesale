@@ -15,16 +15,14 @@ public class Main {
                 .withKeyspace("wholesale")
                 .build();
 
-        System.out.println("CONNECTED: ");
-        System.out.println("session: " + session);
-
         try {
             File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
+            String line;
 
-            while (br.readLine() != null) {
-                String[] parameters = br.readLine().split(",");
+            while ((line = br.readLine()) != null) {
+                String[] parameters = line.split(",");
 
                 switch (parameters[0]) {
 //                    case "N":
@@ -67,8 +65,7 @@ public class Main {
 
             fr.close();
             br.close();
-
-            System.out.println("End");
+            session.close();
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
