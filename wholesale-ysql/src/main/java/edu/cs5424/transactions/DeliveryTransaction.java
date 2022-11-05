@@ -68,8 +68,6 @@ public class DeliveryTransaction {
             int o_ol_cnt = -1;
             try {
                 // select min id for order needing carrier
-
-                // !!! can creat by orderbyid table
                 ptmt = order_pstmt;
                 ptmt.setInt(1, w_id);
                 ptmt.setInt(2, d_id);
