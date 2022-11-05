@@ -34,7 +34,7 @@ public class OrderStatusTransaction {
 
             int orderID = -1;
 
-            System.out.println("Customer Details: ");
+            System.out.println("---Customer Details: ");
             PreparedStatement getCustomerDetailsStmt = this.conn.prepareStatement(String.format(QUERY_GET_CUSTOMER_DETAILS, this.warehouseID, this.districtID, this.customerID));
             ResultSet customer = getCustomerDetailsStmt.executeQuery();
             while (customer.next()) {
@@ -43,7 +43,7 @@ public class OrderStatusTransaction {
                         customer.getString("c_last"), customer.getBigDecimal("c_balance").intValue());
             }
 
-            System.out.println("Last Order Details: ");
+            System.out.println("---Last Order Details: ");
             PreparedStatement getLastOrderStmt = this.conn.prepareStatement(String.format(QUERY_GET_LAST_ORDER, this.warehouseID, this.districtID, this.customerID));
             ResultSet lastOrder = getLastOrderStmt.executeQuery();
             while (lastOrder.next()) {
@@ -57,7 +57,7 @@ public class OrderStatusTransaction {
                 System.out.printf("Invalid Order Number, Customer ID: %d, Warehouse ID: %d, District ID: %d\n", this.customerID, this.warehouseID, this.districtID);
             }
 
-            System.out.println("Item Details: ");
+            System.out.println("---Item Details: ");
             PreparedStatement getItemDetailsStmt = this.conn.prepareStatement(String.format(QUERY_GET_ITEM_DETAILS, this.warehouseID, this.districtID, orderID));
             ResultSet itemDetails = getItemDetailsStmt.executeQuery();
             while (itemDetails.next()) {
