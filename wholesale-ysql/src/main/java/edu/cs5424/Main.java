@@ -64,6 +64,7 @@ public class Main {
 
             fr.close();
             br.close();
+            conn.close();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
