@@ -61,7 +61,7 @@ public class DeliveryTransaction {
         }
     }
 
-    public void excute() {
+    public void execute() {
         PreparedStatement ptmt = null;
         for (int d_id = 1; d_id <= 10; d_id++) {
             int o_id = -1;

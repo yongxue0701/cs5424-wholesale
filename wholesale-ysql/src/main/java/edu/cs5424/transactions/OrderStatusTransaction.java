@@ -16,15 +16,26 @@ public class OrderStatusTransaction {
             "WHERE ol_w_id = %d " +
             "AND ol_d_id = %d " +
             "AND ol_o_id = %d;";
+    private final int warehouseID;
+    private final int districtID;
+    private final int customerID;
+    private Connection conn = null;
 
-    public void getOrderStatus(Connection conn, int warehouseID, int districtID, int customerID) {
+    public OrderStatusTransaction(final Connection connection, final String[] parameters) {
+        this.conn = connection;
+        this.warehouseID = Integer.parseInt(parameters[1]);
+        this.districtID = Integer.parseInt(parameters[2]);
+        this.customerID = Integer.parseInt(parameters[3]);
+    }
+
+    public void execute() {
         try {
-            System.out.println("------Order Status------");
+            System.out.println(String.format("------Order Status: warehouse id: %d, district id: %d, customer id: %d------", this.warehouseID, this.districtID, this.customerID));
 
             int orderID = -1;
 
             System.out.println("Customer Details: ");
-            PreparedStatement getCustomerDetailsStmt = conn.prepareStatement(String.format(QUERY_GET_CUSTOMER_DETAILS, warehouseID, districtID, customerID));
+            PreparedStatement getCustomerDetailsStmt = this.conn.prepareStatement(String.format(QUERY_GET_CUSTOMER_DETAILS, this.warehouseID, this.districtID, this.customerID));
             ResultSet customer = getCustomerDetailsStmt.executeQuery();
             while (customer.next()) {
                 System.out.printf("First Name: %s, Middle Name: %s, Last Name: %s, Balance: %d\n",
@@ -33,7 +44,7 @@ public class OrderStatusTransaction {
             }
 
             System.out.println("Last Order Details: ");
-            PreparedStatement getLastOrderStmt = conn.prepareStatement(String.format(QUERY_GET_LAST_ORDER, warehouseID, districtID, customerID));
+            PreparedStatement getLastOrderStmt = this.conn.prepareStatement(String.format(QUERY_GET_LAST_ORDER, this.warehouseID, this.districtID, this.customerID));
             ResultSet lastOrder = getLastOrderStmt.executeQuery();
             while (lastOrder.next()) {
                 orderID = lastOrder.getInt("o_id");
@@ -43,17 +54,22 @@ public class OrderStatusTransaction {
             }
 
             if (orderID == -1) {
-                System.out.printf("Invalid Order Number, Customer ID: %d, Warehouse ID: %d, District ID: %d\n", customerID, warehouseID, districtID);
+                System.out.printf("Invalid Order Number, Customer ID: %d, Warehouse ID: %d, District ID: %d\n", this.customerID, this.warehouseID, this.districtID);
             }
 
             System.out.println("Item Details: ");
-            PreparedStatement getItemDetailsStmt = conn.prepareStatement(String.format(QUERY_GET_ITEM_DETAILS, warehouseID, districtID, orderID));
+            PreparedStatement getItemDetailsStmt = this.conn.prepareStatement(String.format(QUERY_GET_ITEM_DETAILS, this.warehouseID, this.districtID, orderID));
             ResultSet itemDetails = getItemDetailsStmt.executeQuery();
             while (itemDetails.next()) {
+                String deliveryTime = "NULL";
+                if (itemDetails.getTimestamp("ol_delivery_d") != null){
+                    deliveryTime = itemDetails.getTimestamp("ol_delivery_d").toString();
+                }
+
                 System.out.printf("Item Number: %d, Supplying Warehouse Number: %d, Quantity: %d, Amount: %d, Delivery Time: %s\n",
                         itemDetails.getInt("ol_i_id"), itemDetails.getInt("ol_supply_w_id"),
                         itemDetails.getBigDecimal("ol_quantity").intValue(), itemDetails.getBigDecimal("ol_amount").intValue(),
-                        itemDetails.getTimestamp("ol_delivery_d").toString());
+                        deliveryTime);
             }
 
             System.out.println("-----------------------");
