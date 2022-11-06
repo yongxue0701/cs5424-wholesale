@@ -107,7 +107,9 @@ public class DeliveryTransaction extends BaseTransaction {
             c_balance.add(customerow.getBigDecimal("c_balance"));
             int c_delivery_cnt = customerow.getInt("c_delivery_cnt") + 1;
 
-            session.execute(customer_update_pstmt.bind(c_balance, c_delivery_cnt, w_id, d_id, c_id, c_delivery_cnt - 1));
+            for (int i = 1; i <= c_delivery_cnt; i++) {
+                session.execute(customer_update_pstmt.bind(c_balance, c_delivery_cnt, w_id, d_id, c_id, i));
+            }
 
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
