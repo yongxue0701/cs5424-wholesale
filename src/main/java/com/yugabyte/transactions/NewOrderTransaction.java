@@ -44,6 +44,7 @@ public class NewOrderTransaction extends BaseTransaction {
         updateDistrict(); //increment D_NEXT_O_ID by 1
         queryClient(); //get C_LAST, C_CREDIT, C_DISCOUNT
         queryWarehouse(); //get W_TAX
+        createNewOrderTemp();
         boolean allLocal = true;
         int numItems = 0;
         double totalAmount = 0;
@@ -99,7 +100,8 @@ public class NewOrderTransaction extends BaseTransaction {
         }
 
         totalAmount = totalAmount * (1 + d_tax + w_tax) * (1 - c_discount);
-        createNewOrder(numItems, allLocal);
+//        createNewOrder(numItems, allLocal);
+        updateOrder(numItems, allLocal);
 
         System.out.printf("""
                         New Order Transaction Output
@@ -117,8 +119,8 @@ public class NewOrderTransaction extends BaseTransaction {
         for (int i = 0; i < orderItems.size(); i++) {
             OrderedItem item = orderItems.get(i);
             System.out.printf("""
-                            [5.%d] ITEM_NUMBER: %d, I_NAME: %s, SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %f, S_QUANTITY: %d
-                            """, i+1, item.getItemNumber(), item.getItemName(), item.getSupplierWarehouse(), item.getQuantity(), item.getOrderAmount(), item.getStockQuantity());
+                    [5.%d] ITEM_NUMBER: %d, I_NAME: %s, SUPPLIER_WAREHOUSE: %d, QUANTITY: %d, OL_AMOUNT: %f, S_QUANTITY: %d
+                    """, i + 1, item.getItemNumber(), item.getItemName(), item.getSupplierWarehouse(), item.getQuantity(), item.getOrderAmount(), item.getStockQuantity());
         }
     }
 
@@ -235,16 +237,44 @@ public class NewOrderTransaction extends BaseTransaction {
                 INSERT INTO order_Line
                 VALUES (?, ?, ?, ?, ?, null, ?, ?, ?, ?)
                 """);
-        pStmt.setInt(1,w_id);
-        pStmt.setInt(2,d_id);
-        pStmt.setInt(3,n);
-        pStmt.setInt(4,ol_number);
-        pStmt.setInt(5,i_id);
-        pStmt.setDouble(6,itemAmount);
-        pStmt.setInt(7,supply_w_id);
-        pStmt.setInt(8,quantity);
+        pStmt.setInt(1, w_id);
+        pStmt.setInt(2, d_id);
+        pStmt.setInt(3, n);
+        pStmt.setInt(4, ol_number);
+        pStmt.setInt(5, i_id);
+        pStmt.setDouble(6, itemAmount);
+        pStmt.setInt(7, supply_w_id);
+        pStmt.setInt(8, quantity);
         pStmt.setString(9, dist_info);
         pStmt.executeUpdate();
+    }
+
+    private void createNewOrderTemp() throws SQLException {
+        Date date = new Date(System.currentTimeMillis());
+        o_entry_d = String.valueOf(date);
+
+        PreparedStatement pStmt = conn.prepareStatement("""
+                INSERT INTO orders
+                VALUES (?, ?, ?, ?, null, null, null, ?)
+                """);
+        pStmt.setInt(1, w_id);
+        pStmt.setInt(2, d_id);
+        pStmt.setInt(3, n);
+        pStmt.setInt(4, c_id);
+        pStmt.setDate(5, date);
+        pStmt.executeUpdate();
+    }
+
+    private void updateOrder(int numItems, boolean allLocal) throws SQLException {
+        int o_all_local = 0;
+        if (allLocal) o_all_local = 1;
+
+        String query = String.format("""
+                UPDATE Orders
+                SET O_OL_CNT = %d, O_ALL_LOCAL = %d
+                WHERE O_W_ID = %d AND O_D_ID = %d AND O_ID = %d AND O_C_ID = %d
+                """, numItems, o_all_local, w_id, d_id, n, c_id);
+        executeSQL(query);
     }
 
     private void createNewOrder(int numItems, boolean allLocal) throws SQLException {
