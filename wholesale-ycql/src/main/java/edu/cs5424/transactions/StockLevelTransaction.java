@@ -9,7 +9,7 @@ public class StockLevelTransaction extends BaseTransaction {
     private final String QUERY_GET_NEXT_ORDER_ID = "SELECT d_next_o_id FROM wholesale.district " +
             "WHERE d_w_id = %d " +
             "AND d_id = %d;";
-    private final String QUERY_GET_LAST_L_ORDERS = "SELECT o_id FROM orders " +
+    private final String QUERY_GET_LAST_L_ORDERS = "SELECT o_id FROM wholesale.orders " +
             "WHERE o_w_id = %d " +
             "AND o_d_id = %d " +
             "AND o_id >= %d " +
