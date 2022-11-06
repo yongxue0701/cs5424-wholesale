@@ -26,34 +26,34 @@ public class DeliveryTransaction extends BaseTransaction {
         this.carrier_id = Integer.parseInt(params[2]);
 
         try {
-            order_pstmt = conn.prepareStatement(
+            order_pstmt = this.conn.prepareStatement(
                     "SELECT o_id, o_c_id, o_ol_cnt " +
                             "FROM orders " +
                             "WHERE o_w_id = ? AND o_d_id = ? AND o_carrier_id IS NULL " +
                             "ORDER BY o_id " +
                             "LIMIT 1;"
             );
-            order_carrier_pstmt = conn.prepareStatement(
+            order_carrier_pstmt = this.conn.prepareStatement(
                     "UPDATE orders " +
                             "SET o_carrier_id = ? " +
                             "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? AND o_carrier_id IS NULL;"
             );
-            order_lines_pstmt = conn.prepareStatement(
+            order_lines_pstmt = this.conn.prepareStatement(
                     "UPDATE order_line " +
                             "SET ol_delivery_d = ? " +
                             "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number <= ?;"
             );
-            customer_pstmt = conn.prepareStatement(
+            customer_pstmt = this.conn.prepareStatement(
                     "SELECT c_balance, c_delivery_cnt " +
                             "FROM customer " +
                             "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;"
             );
-            order_lines_amount_pstmt = conn.prepareStatement(
+            order_lines_amount_pstmt = this.conn.prepareStatement(
                     "SELECT sum(ol_amount) as sum_ol_amount " +
                             "FROM order_line " +
                             "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;"
             );
-            customer_update_pstmt = conn.prepareStatement(
+            customer_update_pstmt = this.conn.prepareStatement(
                     "UPDATE customer " +
                             "SET c_balance = ?, c_delivery_cnt = ? " +
                             "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? AND c_delivery_cnt = ?;"
@@ -79,6 +79,9 @@ public class DeliveryTransaction extends BaseTransaction {
                 ptmt.setInt(2, d_id);
 
                 ResultSet order = ptmt.executeQuery();
+                if (order == null) {
+                    continue;
+                }
                 while (order.next()) {
                     o_id = order.getInt("o_id");
                     c_id = order.getInt("o_c_id");
