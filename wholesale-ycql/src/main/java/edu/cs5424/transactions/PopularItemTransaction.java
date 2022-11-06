@@ -9,13 +9,11 @@ public class PopularItemTransaction {
     private PreparedStatement data_statement;
     private PreparedStatement percentage_statement;
 
-    private String l;
-
     public PopularItemTransaction(final Connection connection, final String[] parameters) {
         String w_id = parameters[1];
         String d_id = parameters[2];
         // number of last orders
-        this.l = parameters[3];
+        String l = parameters[3];
 
         try {
             data_statement = connection.prepareStatement(
@@ -115,9 +113,9 @@ public class PopularItemTransaction {
                 String ol_quantity = result.getString("ol_quantity");
 
                 System.out.printf(
-                    "(D_ID, W_ID, L, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
-                    "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n",
-                    d_id, w_id, l, o_id, o_entry_d, c_first,
+                    "(D_ID, W_ID, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
+                    "(%s, %s, %s, %s, %s, %s, %s, %s, %s. %s)\n",
+                    d_id, w_id, o_id, o_entry_d, c_first,
                     c_middle,c_last,i_name,ol_quantity,
                     i_name_to_percent.get(i_name)
                 );
