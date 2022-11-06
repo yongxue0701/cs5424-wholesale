@@ -2,6 +2,7 @@ package edu.cs5424;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.io.*;
 
@@ -9,7 +10,7 @@ public class DataProcessor {
     private CqlSession session = null;
     private String basePath;
 
-    public DataProcessor(CqlSession session, String basePath) {
+    public DataProcessor(String basePath, CqlSession session) {
         this.session = session;
         this.basePath = basePath;
     }
@@ -18,7 +19,7 @@ public class DataProcessor {
         System.out.println("------start to drop tables------");
 
         try {
-            File file = new File(String.format("%s/drop_table.sql", this.basePath));    //creates a new file instance
+            File file = new File(String.format("%s/drop_table.cql", this.basePath));    //creates a new file instance
             Scanner scanner = new Scanner(file);
 
             while (scanner.hasNextLine()) {
@@ -35,7 +36,7 @@ public class DataProcessor {
         System.out.println("------start to create tables------");
 
         try {
-            File file = new File(String.format("%s/create_table.sql", this.basePath));    //creates a new file instance
+            File file = new File(String.format("%s/create_table.cql", this.basePath));    //creates a new file instance
             Scanner scanner = new Scanner(file);
             scanner.useDelimiter(";");
 
