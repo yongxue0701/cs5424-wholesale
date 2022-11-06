@@ -8,7 +8,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import java.math.BigDecimal;
 
-public class DeliveryTransaction {
+public class DeliveryTransaction extends BaseTransaction {
     private final int w_id;
     private final int carrier_id;
     CqlSession session;
@@ -19,12 +19,14 @@ public class DeliveryTransaction {
     private PreparedStatement order_lines_pstmt;
     private PreparedStatement customer_update_pstmt;
 
-    public DeliveryTransaction(CqlSession sess, final String[] parameters) {
-        session = sess;
-        w_id = Integer.parseInt(parameters[1]);
-        carrier_id = Integer.parseInt(parameters[2]);
+    public DeliveryTransaction(CqlSession session, final String[] params) {
+        super(session, params);
 
-        order_pstmt = sess.prepare(
+        this.session = session;
+        this.w_id = Integer.parseInt(params[1]);
+        this.carrier_id = Integer.parseInt(params[2]);
+
+        order_pstmt = this.session.prepare(
                 "SELECT o_id, o_c_id, o_ol_cnt " +
                         "FROM orders " +
                         "WHERE o_w_id = ? AND o_d_id = ? AND o_carrier_id = -1 " +
@@ -32,12 +34,12 @@ public class DeliveryTransaction {
                         "ALLOW FILTERING;"
         );
 
-        customer_pstmt = sess.prepare(
+        customer_pstmt = this.session.prepare(
                 "SELECT c_balance, c_delivery_cnt " +
                         "FROM customer " +
                         "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;"
         );
-        order_lines_amount_pstmt = sess.prepare(
+        order_lines_amount_pstmt = this.session.prepare(
                 "SELECT sum(ol_amount) as sum_ol_amount " +
                         "FROM order_line " +
                         "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;"
@@ -57,7 +59,7 @@ public class DeliveryTransaction {
                                 "IF o_carrier_id = -1;")
                         .setConsistencyLevel(DefaultConsistencyLevel.ONE)
                         .build();
-        order_carrier_pstmt = sess.prepare(order_carrier);
+        order_carrier_pstmt = this.session.prepare(order_carrier);
 
         SimpleStatement customer_update =
                 SimpleStatement.builder("UPDATE customer " +
@@ -66,10 +68,13 @@ public class DeliveryTransaction {
                                 "IF c_delivery_cnt = ?;")
                         .setConsistencyLevel(DefaultConsistencyLevel.ALL)
                         .build();
-        customer_update_pstmt = sess.prepare(customer_update);
+        customer_update_pstmt = this.session.prepare(customer_update);
     }
 
+    @Override
     public void execute() {
+        System.out.println(String.format("------Delivery: warehouse id: %d, carrier id: %d------", this.w_id, this.carrier_id));
+
         for (int d_id = 1; d_id <= 10; d_id++) {
             int o_id = -1;
             int c_id = -1;
@@ -107,5 +112,7 @@ public class DeliveryTransaction {
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
         }
+
+        System.out.println("-----------------------");
     }
 }

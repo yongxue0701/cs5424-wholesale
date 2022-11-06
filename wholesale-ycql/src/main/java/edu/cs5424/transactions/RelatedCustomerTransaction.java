@@ -6,20 +6,25 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import java.util.ArrayList;
 
-public class RelatedCustomerTransaction {
+public class RelatedCustomerTransaction extends BaseTransaction {
     private final int C_W_ID;
     private final int C_D_ID;
     private final int C_ID;
     CqlSession session;
 
-    public RelatedCustomerTransaction(CqlSession sess, final String[] parameters) {
-        session = sess;
-        C_W_ID = Integer.parseInt(parameters[1]);
-        C_D_ID = Integer.parseInt(parameters[2]);
-        C_ID = Integer.parseInt(parameters[3]);
+    public RelatedCustomerTransaction(CqlSession session, final String[] params) {
+        super(session, params);
+
+        this.session = session;
+        this.C_W_ID = Integer.parseInt(params[1]);
+        this.C_D_ID = Integer.parseInt(params[2]);
+        this.C_ID = Integer.parseInt(params[3]);
     }
 
+    @Override
     public void execute() {
+        System.out.println(String.format("------Related Customer: warehouse id: %d, district id: %d, customer id: %d------", this.C_W_ID, this.C_D_ID, this.C_ID));
+
         try {
             ArrayList<ArrayList<Integer>> relatedCustomers = new ArrayList<ArrayList<Integer>>();
             // Add input customer first
@@ -66,6 +71,7 @@ public class RelatedCustomerTransaction {
                 }
             }
             System.out.println("relatedCustomers: " + relatedCustomers);
+            System.out.println("-----------------------");
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

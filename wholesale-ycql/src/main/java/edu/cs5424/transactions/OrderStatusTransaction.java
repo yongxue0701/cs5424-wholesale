@@ -3,7 +3,7 @@ package edu.cs5424.transactions;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
 
-public class OrderStatusTransaction {
+public class OrderStatusTransaction extends BaseTransaction {
     private final String QUERY_GET_CUSTOMER_DETAILS = "SELECT c_first, c_middle, c_last, c_balance FROM wholesale.customer " +
             "WHERE c_w_id = %d " +
             "AND c_d_id = %d " +
@@ -22,20 +22,23 @@ public class OrderStatusTransaction {
     private final int customerID;
     private CqlSession session = null;
 
-    public OrderStatusTransaction(final CqlSession session, final String[] parameters) {
+    public OrderStatusTransaction(final CqlSession session, final String[] params) {
+        super(session, params);
+
         this.session = session;
-        this.warehouseID = Integer.parseInt(parameters[1]);
-        this.districtID = Integer.parseInt(parameters[2]);
-        this.customerID = Integer.parseInt(parameters[3]);
+        this.warehouseID = Integer.parseInt(params[1]);
+        this.districtID = Integer.parseInt(params[2]);
+        this.customerID = Integer.parseInt(params[3]);
     }
 
+    @Override
     public void execute() {
         try {
             System.out.println(String.format("------Order Status: warehouse id: %d, district id: %d, customer id: %d------", this.warehouseID, this.districtID, this.customerID));
 
             int orderID = -1;
 
-            System.out.println("---Customer Details: ");
+            System.out.println("Customer Details: ");
             ResultSet customer = this.session.execute(String.format(QUERY_GET_CUSTOMER_DETAILS, this.warehouseID, this.districtID, this.customerID));
             for (Row row : customer.all()) {
                 System.out.printf("First Name: %s, Middle Name: %s, Last Name: %s, Balance: %d\n",
@@ -43,7 +46,7 @@ public class OrderStatusTransaction {
                         row.getString("c_last"), row.getBigDecimal("c_balance").intValue());
             }
 
-            System.out.println("---Last Order Details: ");
+            System.out.println("Last Order Details: ");
             ResultSet lastOrder = this.session.execute(String.format(QUERY_GET_LAST_ORDER, this.warehouseID, this.districtID, this.customerID));
             for (Row row : lastOrder.all()) {
                 orderID = row.getInt("o_id");
@@ -56,11 +59,11 @@ public class OrderStatusTransaction {
                         this.customerID, this.warehouseID, this.districtID);
             }
 
-            System.out.println("---Item Details: ");
+            System.out.println("Item Details: ");
             ResultSet itemDetails = this.session.execute(String.format(QUERY_GET_ITEM_DETAILS, this.warehouseID, this.districtID, orderID));
             for (Row row : itemDetails.all()) {
                 String deliveryTime = "NULL";
-                if (row.getLocalTime("ol_delivery_d") != null) {
+                if (row.getInstant("ol_delivery_d") != null) {
                     deliveryTime = row.getInstant("ol_delivery_d").toString();
                 }
 

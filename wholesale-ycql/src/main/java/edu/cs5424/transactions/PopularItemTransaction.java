@@ -7,7 +7,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class PopularItemTransaction {
+public class PopularItemTransaction extends BaseTransaction {
     private CqlSession session = null;
     private Integer w_id = null;
     private Integer d_id = null;
@@ -41,15 +41,20 @@ public class PopularItemTransaction {
         }
     }
 
-    public PopularItemTransaction(final CqlSession session, final String[] parameters) {
-        this.w_id = Integer.parseInt(parameters[1]);
-        this.d_id = Integer.parseInt(parameters[2]);
+    public PopularItemTransaction(final CqlSession session, final String[] params) {
+        super(session, params);
+
+        this.w_id = Integer.parseInt(params[1]);
+        this.d_id = Integer.parseInt(params[2]);
         // number of last orders
-        this.l = Integer.parseInt(parameters[3]);
+        this.l = Integer.parseInt(params[3]);
         this.session = session;
     }
 
+    @Override
     public void execute() {
+        System.out.println(String.format("------Populate Item: warehouse id: %s, district id: %s, num of last orders: %s------", this.w_id, this.d_id, this.l));
+
         ResultSet districtRes = this.session.execute(
                 String.format(
                         "select d_next_o_id from wholesale.district where (d_w_id = %d and d_id = %d)",
@@ -221,5 +226,7 @@ public class PopularItemTransaction {
                     ol.ol_quantity, itemIdOrderCounter.get(ol.ol_i_id) / this.l
             );
         }
+
+        System.out.println("-----------------------");
     }
 }
