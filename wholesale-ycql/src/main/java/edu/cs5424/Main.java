@@ -15,15 +15,16 @@ public class Main {
                 .withKeyspace("wholesale")
                 .build();
 
-        if (args.length > 0) {
+        if (args.length == 0) {
 //            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
             String bathPath = String.format("./scripts/ycql");
             DataProcessor processor = new DataProcessor(session, bathPath);
 
-            switch (args[0]) {
+            String cmd = "run";
+            switch (cmd) {
                 case "run":
                     Main main = new Main();
-                    for (int i = 0; i <= 19; i++) {
+                    for (int i = 0; i < 1; i++) {
 //                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
                         String filename = String.format("./xact/%d.txt", i);
                         main.run(session, filename);
@@ -56,17 +57,17 @@ public class Main {
                 switch (parameters[0]) {
 //                    case "N":
 //                        // Need to handle the multiple-line inputs!
-//                        NewOrderTransaction transactionN  = new NewOrderTransaction(session, parameters);
-//                        transactionR.execute();
+//                        NewOrderTransaction transactionN = new NewOrderTransaction(session, br, parameters);
+//                        transactionN.execute();
 //                        break;
 //                    case "P":
 //                        PaymentTransaction transactionP = new PaymentTransaction(session, parameters);
 //                        transactionP.execute();
 //                        break;
-                    case "D":
-                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
-                        transactionD.execute();
-                        break;
+//                    case "D":
+//                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
+//                        transactionD.execute();
+//                        break;
 //                    case "O":
 //                        OrderStatusTransaction transactionO = new OrderStatusTransaction(session, parameters);
 //                        transactionO.execute();

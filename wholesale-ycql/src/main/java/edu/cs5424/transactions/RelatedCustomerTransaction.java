@@ -4,16 +4,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.ArrayList;
 
 public class RelatedCustomerTransaction {
-    //
-//  public static final String SELECT_ORDERS = "SELECT O_L_INFO FROM customer_order WHERE O_W_ID = %d AND O_D_ID = %d AND O_C_ID = %d ALLOW FILTERING";
-//
-//  public static final String SELECT_ITEMS = "SELECT I_O_ID_LIST FROM item WHERE I_ID IN (%s)";
-//
     private final int C_W_ID;
     private final int C_D_ID;
     private final int C_ID;
@@ -27,104 +20,54 @@ public class RelatedCustomerTransaction {
     }
 
     public void execute() {
-
-//    System.out.println(String.format("This customer: C_W_ID = %s, C_D_ID = %s, C_ID = %s",
-//            C_W_ID, C_D_ID, C_ID));
-        // find orders for this customer
-        ResultSet rs = session.execute(String.format("select O_W_ID,O_D_ID,O_ID from wholesale.orders where O_W_ID = %d and O_D_ID = %d and O_C_ID = %d", C_W_ID, C_D_ID, C_ID));
-        ArrayList<HashMap<String, Integer>> orders_this_customer = new ArrayList<HashMap<String, Integer>>();
-        for (Row row : rs.all()) {
-//      System.out.println(String.format("Query returned: O_W_ID = %s, O_D_ID = %s, O_ID = %s",
-//              row.getInt("O_W_ID"), row.getInt("O_D_ID"), row.getInt("O_ID")));
-            HashMap<String, Integer> order_this_customer = new HashMap<String, Integer>();
-            order_this_customer.put("O_W_ID", row.getInt("O_W_ID"));
-            order_this_customer.put("O_D_ID", row.getInt("O_D_ID"));
-            order_this_customer.put("O_ID", row.getInt("O_ID"));
-            orders_this_customer.add(order_this_customer);
-        }
-
-        ArrayList<HashMap<String, Integer>> relatedCustomers = new ArrayList<HashMap<String, Integer>>();
-        // Add input customer first
-        HashMap<String, Integer> thisCustomer = new HashMap<String, Integer>();
-        thisCustomer.put("C_W_ID", C_W_ID);
-        thisCustomer.put("C_D_ID", C_D_ID);
-        thisCustomer.put("C_ID", C_ID);
-        relatedCustomers.add(thisCustomer);
-
-        // Find related customers
-        ArrayList<HashMap<String, Integer>> otherCustomers = new ArrayList<HashMap<String, Integer>>();
-        ResultSet rs_customer = session.execute(String.format("select C_W_ID,C_D_ID,C_ID from wholesale.customer where C_W_ID <> %d", C_W_ID));
-        for (Row row : rs_customer.all()) {
-//      System.out.println(String.format("Query returned: other customer C_W_ID = %s, C_D_ID = %s, C_ID = %s",
-//              row.getInt("C_W_ID"), row.getInt("C_D_ID"), row.getInt("C_ID")));
-            HashMap<String, Integer> otherCustomer = new HashMap<String, Integer>();
-            otherCustomer.put("C_W_ID", row.getInt("C_W_ID"));
-            otherCustomer.put("C_D_ID", row.getInt("C_D_ID"));
-            otherCustomer.put("C_ID", row.getInt("C_ID"));
-            otherCustomers.add(otherCustomer);
-        }
-        for (HashMap<String, Integer> otherCustomer : otherCustomers) {
-//            System.out.println(String.format("Other customer C_W_ID = %s, C_D_ID = %s, C_ID = %s",
-//                    otherCustomer.get("C_W_ID"), otherCustomer.get("C_D_ID"), otherCustomer.get("C_ID")));
-            // Find orders for this customer
-            ResultSet rs_order = session.execute(String.format("select O_W_ID,O_D_ID,O_ID from wholesale.orders where O_W_ID = %d and O_D_ID = %d and O_C_ID = %d", otherCustomer.get("C_W_ID"), otherCustomer.get("C_D_ID"), otherCustomer.get("C_ID")));
-            ArrayList<HashMap<String, Integer>> orders_other_customer = new ArrayList<HashMap<String, Integer>>();
-            for (Row row : rs_order.all()) {
-//        System.out.println(String.format("Query returned: O_W_ID = %s, O_D_ID = %s, O_ID = %s",
-//                row.getInt("O_W_ID"), row.getInt("O_D_ID"), row.getInt("O_ID")));
-                HashMap<String, Integer> order_other_customer = new HashMap<String, Integer>();
-                order_other_customer.put("O_W_ID", row.getInt("O_W_ID"));
-                order_other_customer.put("O_D_ID", row.getInt("O_D_ID"));
-                order_other_customer.put("O_ID", row.getInt("O_ID"));
-                orders_other_customer.add(order_other_customer);
-            }
-
-            boolean found = false;
-            for (HashMap<String, Integer> order_this_customer : orders_this_customer) {
-                for (HashMap<String, Integer> order_other_customer : orders_other_customer) {
-//          System.out.println("--------------------------------------------");
-//          System.out.println(String.format("This order: O_W_ID = %s, O_D_ID = %s, O_ID = %s",
-//                                order_this_customer.get("O_W_ID"), order_this_customer.get("O_D_ID"), order_this_customer.get("O_ID")));
-//          System.out.println(String.format("Other order: O_W_ID = %s, O_D_ID = %s, O_ID = %s",
-//                                order_other_customer.get("O_W_ID"), order_other_customer.get("O_D_ID"), order_other_customer.get("O_ID")));
-//          System.out.println("--------------------------------------------");
-                    int counter = 0; //number of same order item
-                    //find order items for orders_this_customer
-                    ResultSet rs_order_item_this = session.execute(String.format("select OL_I_ID from wholesale.order_line where OL_W_ID = %d and OL_D_ID = %d and OL_O_ID = %d", order_this_customer.get("O_W_ID"), order_this_customer.get("O_D_ID"), order_this_customer.get("O_ID")));
-//                        ArrayList<HashMap<String, Integer>> order_items_this_customer = new ArrayList<HashMap<String, Integer>>();
-                    List<Integer> order_items_this_customer = new ArrayList<Integer>();
-                    for (Row row : rs_order_item_this) {
-//            System.out.println(String.format("Query returned: this OL_I_ID = %s",
-//                    row.getInt("OL_I_ID")));
-                        order_items_this_customer.add(row.getInt("OL_I_ID"));
-                    }
-                    //find order items for order_other_customer
-                    ResultSet rs_order_item_other = session.execute(String.format("select OL_I_ID from wholesale.order_line where OL_W_ID = %d and OL_D_ID = %d and OL_O_ID = %d", order_other_customer.get("O_W_ID"), order_other_customer.get("O_D_ID"), order_other_customer.get("O_ID")));
-                    List<Integer> order_items_other_customer = new ArrayList<Integer>();
-                    for (Row row : rs_order_item_other) {
-//            System.out.println(String.format("Query returned: other OL_I_ID = %s",
-//                    row.getInt("OL_I_ID")));
-                        order_items_other_customer.add(row.getInt("OL_I_ID"));
-                    }
-                    for (Integer order_item_this_customer : order_items_this_customer) {
-                        if (order_items_other_customer.contains(order_item_this_customer))
-                            counter = counter + 1;
-                        if (counter >= 2)
-                            break;
-                    }
-//          System.out.println("counter: " + counter);
-                    if (counter >= 2) {
-                        relatedCustomers.add(otherCustomer);
-                        found = true;
-                        break;
-                    }
+        try {
+            ArrayList<ArrayList<Integer>> relatedCustomers = new ArrayList<ArrayList<Integer>>();
+            // Add input customer first
+            ArrayList<Integer> thisCustomer = new ArrayList<Integer>();
+            thisCustomer.add(C_W_ID);
+            thisCustomer.add(C_D_ID);
+            thisCustomer.add(C_ID);
+            relatedCustomers.add(thisCustomer);
+            ResultSet rs = session.execute(String.format("select O_W_ID,O_D_ID,O_ID from wholesale.orders where O_W_ID = %d and O_D_ID = %d and O_C_ID = %d", C_W_ID, C_D_ID, C_ID));
+            ArrayList<Integer> order_items_this_customer = new ArrayList<Integer>();
+            for (Row row : rs.all()) {
+                ResultSet rs_order_item_this = session.execute(String.format("select OL_I_ID from wholesale.order_line where OL_W_ID = %d and OL_D_ID = %d and OL_O_ID = %d", row.getInt("O_W_ID"), row.getInt("O_D_ID"), row.getInt("O_ID")));
+                for (Row row1 : rs_order_item_this) {
+                    order_items_this_customer.add(row1.getInt("OL_I_ID"));
                 }
-                if (found == true)
-                    break;
             }
-//                break; // test one other customer only
-        }
-        System.out.println("relatedCustomers: " + relatedCustomers);
+            ArrayList<Row> order_items = new ArrayList<Row>();
+            for (Integer i = 0; i < order_items_this_customer.size(); i++) {
+                String ORDER_LINE_QUERY = "select OL_W_ID, OL_D_ID, OL_O_ID, OL_I_ID from wholesale.order_line where OL_W_ID<>" + C_W_ID;
+                ORDER_LINE_QUERY = ORDER_LINE_QUERY + " and ";
+                ORDER_LINE_QUERY = ORDER_LINE_QUERY + "OL_I_ID=" + order_items_this_customer.get(i);
+                ResultSet rs_order_item = session.execute(ORDER_LINE_QUERY);
+                order_items.addAll(rs_order_item.all());
+            }
 
+            ArrayList<Row> orders = new ArrayList<Row>();
+            for (Row item : order_items) {
+                String ORDER_QUERY = String.format("select O_W_ID, O_D_ID, O_C_ID, O_ID from wholesale.orders where O_W_ID=%d and O_D_ID=%d and O_ID=%d", item.getInt("OL_W_ID"), item.getInt("OL_D_ID"), item.getInt("OL_O_ID"));
+                ResultSet rs_order = session.execute(ORDER_QUERY);
+                orders.addAll(rs_order.all());
+            }
+            ArrayList<ArrayList<Integer>> orders_check = new ArrayList<ArrayList<Integer>>();
+            for (Row row : orders) {
+                ArrayList<Integer> order_check = new ArrayList<Integer>();
+                order_check.add(row.getInt("O_W_ID"));
+                order_check.add(row.getInt("O_D_ID"));
+                order_check.add(row.getInt("O_C_ID"));
+                order_check.add(row.getInt("O_ID"));
+                if (orders_check.contains(order_check)) {
+                    order_check.remove(order_check.size() - 1);
+                    relatedCustomers.add(order_check);
+                } else {
+                    orders_check.add(order_check);
+                }
+            }
+            System.out.println("relatedCustomers: " + relatedCustomers);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 }
