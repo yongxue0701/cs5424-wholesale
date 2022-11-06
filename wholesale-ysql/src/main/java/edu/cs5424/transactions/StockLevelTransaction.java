@@ -51,6 +51,7 @@ public class StockLevelTransaction extends BaseTransaction {
             }
 
             if (nextOrderID == -1) {
+                System.out.println(String.format(QUERY_GET_NEXT_ORDER_ID, this.warehouseID, this.districtID));
                 System.out.printf("Invalid Next Order ID, Warehouse ID: %d, District ID: %d\n", this.warehouseID, this.districtID);
             }
 
