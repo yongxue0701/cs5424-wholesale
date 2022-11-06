@@ -8,6 +8,7 @@ import java.util.HashMap;
 public class PopularItemTransaction extends BaseTransaction {
     private PreparedStatement data_statement;
     private PreparedStatement percentage_statement;
+
     private final String w_id;
     private final String d_id;
     private final String l;
@@ -51,7 +52,7 @@ public class PopularItemTransaction extends BaseTransaction {
                                     "join customer c\n" +
                                     "    on o.o_w_id = c.c_w_id and o.o_d_id = c.c_d_id and o.o_c_id = c.c_id\n" +
                                     "join item on order_line.ol_i_id = item.i_id;",
-                            this.d_id, this.w_id, this.l
+                            d_id, w_id, l
                     )
             );
 
@@ -86,7 +87,7 @@ public class PopularItemTransaction extends BaseTransaction {
                                     "    on o.o_w_id = c.c_w_id and o.o_d_id = c.c_d_id and o.o_c_id = c.c_id\n" +
                                     "join item on order_line.ol_i_id = item.i_id\n" +
                                     "group by i_name",
-                            this.d_id, this.w_id, this.l
+                            d_id, w_id, l
                     )
             );
         } catch (SQLException e) {
@@ -94,7 +95,6 @@ public class PopularItemTransaction extends BaseTransaction {
         }
     }
 
-    @Override
     public void execute() {
         try {
             System.out.println(String.format("------Populate Item: warehouse id: %s, district id: %s, num of last orders: %s------", this.w_id, this.d_id, this.l));
@@ -121,9 +121,9 @@ public class PopularItemTransaction extends BaseTransaction {
                 String ol_quantity = result.getString("ol_quantity");
 
                 System.out.printf(
-                        "(D_ID, W_ID, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
-                                "(%s, %s, %s, %s, %s, %s, %s, %s, %s. %s)\n",
-                        d_id, w_id, o_id, o_entry_d, c_first,
+                        "(D_ID, W_ID, L, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
+                                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n",
+                        d_id, w_id, l, o_id, o_entry_d, c_first,
                         c_middle, c_last, i_name, ol_quantity,
                         i_name_to_percent.get(i_name)
                 );
@@ -133,6 +133,5 @@ public class PopularItemTransaction extends BaseTransaction {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 }
