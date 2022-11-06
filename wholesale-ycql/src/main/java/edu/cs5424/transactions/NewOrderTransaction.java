@@ -7,7 +7,7 @@ import edu.cs5424.datatype.OrderedItem;
 import java.io.*;
 import java.util.*;
 
-public class NewOrderTransaction {
+public class NewOrderTransaction extends BaseTransaction {
     private final CqlSession session;
     private final BufferedReader br;
     private final int w_id;
@@ -26,6 +26,8 @@ public class NewOrderTransaction {
     private String o_entry_d;
 
     public NewOrderTransaction(final CqlSession session, final BufferedReader br, final String[] params) {
+        super(session, params);
+
         this.session = session;
         this.br = br;
         this.c_id = Integer.parseInt(params[1]);
@@ -34,6 +36,7 @@ public class NewOrderTransaction {
         this.numLines = Integer.parseInt(params[4]);
     }
 
+    @Override
     public void execute() {
         System.out.println(String.format("------New Order: warehouse id: %d, district id: %d, customer id: %d, num of lines: %d------", this.w_id, this.d_id, this.c_id, this.numLines));
 

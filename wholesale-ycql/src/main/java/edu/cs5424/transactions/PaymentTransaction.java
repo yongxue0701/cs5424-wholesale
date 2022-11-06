@@ -5,7 +5,7 @@ import com.datastax.oss.driver.api.core.cql.*;
 
 import java.math.BigDecimal;
 
-public class PaymentTransaction {
+public class PaymentTransaction extends BaseTransaction{
     private final int w_id;
     private final int d_id;
     private final int c_id;
@@ -17,6 +17,8 @@ public class PaymentTransaction {
     private CqlSession session = null;
 
     public PaymentTransaction(CqlSession session, String[] params) {
+        super(session, params);
+
         this.session = session;
         this.w_id = Integer.parseInt(params[1]);
         this.d_id = Integer.parseInt(params[2]);
@@ -24,6 +26,7 @@ public class PaymentTransaction {
         this.payment = new BigDecimal(params[4]);
     }
 
+    @Override
     public void execute() {
         System.out.println(String.format("------Payment: warehouse id: %d, district id: %d, customer id: %d------", this.w_id, this.d_id, this.c_id));
 

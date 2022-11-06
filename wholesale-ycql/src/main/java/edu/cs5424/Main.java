@@ -45,6 +45,8 @@ public class Main {
 
     public void run(CqlSession session, String path) {
         try {
+            BaseTransaction transaction = null;
+
 //            File file = new File(path);    //creates a new file instance
             File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/testD.txt");    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
@@ -55,42 +57,39 @@ public class Main {
                 String[] parameters = line.split(",");
 
                 switch (parameters[0]) {
-//                    case "N":
-//                        // Need to handle the multiple-line inputs!
-//                        NewOrderTransaction transactionN = new NewOrderTransaction(session, br, parameters);
-//                        transactionN.execute();
-//                        break;
-//                    case "P":
-//                        PaymentTransaction transactionP = new PaymentTransaction(session, parameters);
-//                        transactionP.execute();
-//                        break;
-//                    case "D":
-//                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
-//                        transactionD.execute();
-//                        break;
-//                    case "O":
-//                        OrderStatusTransaction transactionO = new OrderStatusTransaction(session, parameters);
-//                        transactionO.execute();
-//                        break;
-//                    case "S":
-//                        StockLevelTransaction transactionS = new StockLevelTransaction(session, parameters);
-//                        transactionS.execute();
-//                        break;
-//                    case "I":
-//                        PopularItemTransaction transactionI = new PopularItemTransaction(session, parameters);
-//                        transactionI.execute();
-//                        break;
-//                    case "T":
-//                        TopBalanceTransaction transactionT = new TopBalanceTransaction(session, parameters);
-//                        transactionT.execute();
-//                        break;
-//                    case "R":
-//                        RelatedCustomerTransaction transactionR = new RelatedCustomerTransaction(session, parameters);
-//                        transactionR.execute();
-//                        break;
+                    case "N":
+                        // Need to handle the multiple-line inputs!
+                        transaction = new NewOrderTransaction(session, br, parameters);
+                        break;
+                    case "P":
+                        transaction = new PaymentTransaction(session, parameters);
+                        break;
+                    case "D":
+                        transaction = new DeliveryTransaction(session, parameters);
+                        break;
+                    case "O":
+                        transaction = new OrderStatusTransaction(session, parameters);
+                        break;
+                    case "S":
+                        transaction = new StockLevelTransaction(session, parameters);
+                        break;
+                    case "I":
+                        transaction = new PopularItemTransaction(session, parameters);
+                        break;
+                    case "T":
+                        transaction = new TopBalanceTransaction(session, parameters);
+                        break;
+                    case "R":
+                        transaction = new RelatedCustomerTransaction(session, parameters);
+                        break;
                     default:
                         break;
                 }
+
+                if (transaction != null)
+                    transaction.execute();
+                else
+                    System.err.println("Transaction not executed!");
             }
 
             fr.close();

@@ -3,7 +3,7 @@ package edu.cs5424.transactions;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
 
-public class OrderStatusTransaction {
+public class OrderStatusTransaction extends BaseTransaction {
     private final String QUERY_GET_CUSTOMER_DETAILS = "SELECT c_first, c_middle, c_last, c_balance FROM wholesale.customer " +
             "WHERE c_w_id = %d " +
             "AND c_d_id = %d " +
@@ -22,13 +22,16 @@ public class OrderStatusTransaction {
     private final int customerID;
     private CqlSession session = null;
 
-    public OrderStatusTransaction(final CqlSession session, final String[] parameters) {
+    public OrderStatusTransaction(final CqlSession session, final String[] params) {
+        super(session, params);
+
         this.session = session;
-        this.warehouseID = Integer.parseInt(parameters[1]);
-        this.districtID = Integer.parseInt(parameters[2]);
-        this.customerID = Integer.parseInt(parameters[3]);
+        this.warehouseID = Integer.parseInt(params[1]);
+        this.districtID = Integer.parseInt(params[2]);
+        this.customerID = Integer.parseInt(params[3]);
     }
 
+    @Override
     public void execute() {
         try {
             System.out.println(String.format("------Order Status: warehouse id: %d, district id: %d, customer id: %d------", this.warehouseID, this.districtID, this.customerID));

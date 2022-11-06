@@ -12,11 +12,13 @@ import java.util.PriorityQueue;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
-public class TopBalanceTransaction {
+public class TopBalanceTransaction extends BaseTransaction {
 
     private CqlSession session = null;
 
-    public TopBalanceTransaction(final CqlSession session, final String[] parameters) {
+    public TopBalanceTransaction(final CqlSession session, final String[] params) {
+        super(session, params);
+
         this.session = session;
     }
 
@@ -45,6 +47,7 @@ public class TopBalanceTransaction {
         }
     }
 
+    @Override
     public void execute() {
         PriorityQueue<Customer> customers = new PriorityQueue<>(new CustomerComparator());
 
