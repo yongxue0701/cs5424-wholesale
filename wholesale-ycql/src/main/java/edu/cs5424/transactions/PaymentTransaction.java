@@ -150,7 +150,7 @@ public class PaymentTransaction extends BaseTransaction {
         BigDecimal ytd_amt = new BigDecimal(c_ytd_amount);
         BigDecimal amt = ytd_amt.add(payment);
         int paymentCNT = c_payment_cnt + 1;
-        
+
         String query = String.format("""
                 UPDATE Customer
                 SET C_BALANCE = %.2f, C_YTD_PAYMENT = %.2f, C_PAYMENT_CNT = %d

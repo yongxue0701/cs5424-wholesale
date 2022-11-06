@@ -49,6 +49,8 @@ public class TopBalanceTransaction extends BaseTransaction {
 
     @Override
     public void execute() {
+        System.out.println(String.format("------Top Balance------"));
+
         PriorityQueue<Customer> customers = new PriorityQueue<>(new CustomerComparator());
 
         ResultSet customerResult = this.session.execute(
@@ -105,5 +107,7 @@ public class TopBalanceTransaction extends BaseTransaction {
                     warehouseIdToName.get(c.c_w_id), districtIdToName.get(Map.entry(c.c_w_id, c.c_d_id)),
                     c.c_balance);
         }
+
+        System.out.println("-----------------------");
     }
 }

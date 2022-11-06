@@ -38,7 +38,7 @@ public class OrderStatusTransaction extends BaseTransaction {
 
             int orderID = -1;
 
-            System.out.println("---Customer Details: ");
+            System.out.println("Customer Details: ");
             ResultSet customer = this.session.execute(String.format(QUERY_GET_CUSTOMER_DETAILS, this.warehouseID, this.districtID, this.customerID));
             for (Row row : customer.all()) {
                 System.out.printf("First Name: %s, Middle Name: %s, Last Name: %s, Balance: %d\n",
@@ -46,7 +46,7 @@ public class OrderStatusTransaction extends BaseTransaction {
                         row.getString("c_last"), row.getBigDecimal("c_balance").intValue());
             }
 
-            System.out.println("---Last Order Details: ");
+            System.out.println("Last Order Details: ");
             ResultSet lastOrder = this.session.execute(String.format(QUERY_GET_LAST_ORDER, this.warehouseID, this.districtID, this.customerID));
             for (Row row : lastOrder.all()) {
                 orderID = row.getInt("o_id");
@@ -59,11 +59,11 @@ public class OrderStatusTransaction extends BaseTransaction {
                         this.customerID, this.warehouseID, this.districtID);
             }
 
-            System.out.println("---Item Details: ");
+            System.out.println("Item Details: ");
             ResultSet itemDetails = this.session.execute(String.format(QUERY_GET_ITEM_DETAILS, this.warehouseID, this.districtID, orderID));
             for (Row row : itemDetails.all()) {
                 String deliveryTime = "NULL";
-                if (row.getLocalTime("ol_delivery_d") != null) {
+                if (row.getInstant("ol_delivery_d") != null) {
                     deliveryTime = row.getInstant("ol_delivery_d").toString();
                 }
 

@@ -53,6 +53,8 @@ public class PopularItemTransaction extends BaseTransaction {
 
     @Override
     public void execute() {
+        System.out.println(String.format("------Populate Item: warehouse id: %s, district id: %s, num of last orders: %s------", this.w_id, this.d_id, this.l));
+
         ResultSet districtRes = this.session.execute(
                 String.format(
                         "select d_next_o_id from wholesale.district where (d_w_id = %d and d_id = %d)",
@@ -224,5 +226,7 @@ public class PopularItemTransaction extends BaseTransaction {
                     ol.ol_quantity, itemIdOrderCounter.get(ol.ol_i_id) / this.l
             );
         }
+
+        System.out.println("-----------------------");
     }
 }

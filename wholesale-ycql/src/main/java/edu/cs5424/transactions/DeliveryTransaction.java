@@ -73,6 +73,8 @@ public class DeliveryTransaction extends BaseTransaction {
 
     @Override
     public void execute() {
+        System.out.println(String.format("------Delivery: warehouse id: %d, carrier id: %d------", this.w_id, this.carrier_id));
+
         for (int d_id = 1; d_id <= 10; d_id++) {
             int o_id = -1;
             int c_id = -1;
@@ -110,5 +112,7 @@ public class DeliveryTransaction extends BaseTransaction {
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
         }
+
+        System.out.println("-----------------------");
     }
 }

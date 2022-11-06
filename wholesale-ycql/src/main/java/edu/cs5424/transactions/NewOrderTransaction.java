@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.cql.*;
 import edu.cs5424.datatype.OrderedItem;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.*;
 
 public class NewOrderTransaction extends BaseTransaction {
@@ -14,16 +15,17 @@ public class NewOrderTransaction extends BaseTransaction {
     private final int d_id;
     private final int c_id;
     private final int numLines;
-    private int n;
-    private double d_tax;
+    private int order_id;
+    private BigDecimal d_tax;
     private String c_last;
     private String c_credit;
-    private double c_discount;
-    private double w_tax;
+    private BigDecimal c_discount;
+    private BigDecimal w_tax;
     private String i_name;
-    private double i_price;
-    private int s_quantity;
+    private BigDecimal i_price;
+    private BigDecimal s_quantity;
     private String o_entry_d;
+    private BigDecimal s_ytd;
 
     public NewOrderTransaction(final CqlSession session, final BufferedReader br, final String[] params) {
         super(session, params);
@@ -45,6 +47,8 @@ public class NewOrderTransaction extends BaseTransaction {
         queryClient(); //get C_LAST, C_CREDIT, C_DISCOUNT
         queryWarehouse(); //get W_TAX
         createNewOrderTemp();
+        createNewOrderByTimestamp();
+
         boolean allLocal = true;
         int numItems = 0;
         double totalAmount = 0;
@@ -70,7 +74,7 @@ public class NewOrderTransaction extends BaseTransaction {
                     updateStock(adjustedQty, ol_quantity, isLocal, ol_i_id);
 
                     numItems = numItems + ol_quantity;
-                    double itemAmount = i_price * ol_quantity;
+                    double itemAmount = i_price.multiply(new BigDecimal(ol_quantity)).doubleValue();
                     totalAmount = totalAmount + itemAmount;
                     createNewOrderLine(i + 1, ol_i_id, ol_supply_w_id, ol_quantity, itemAmount);
                     orderItems.add(
@@ -99,7 +103,10 @@ public class NewOrderTransaction extends BaseTransaction {
             }
         }
 
-        totalAmount = totalAmount * (1 + d_tax + w_tax) * (1 - c_discount);
+        BigDecimal totalTax = d_tax.add(w_tax).add(new BigDecimal(1));
+        BigDecimal discount = new BigDecimal(1).subtract(c_discount);
+
+        totalAmount = totalAmount * totalTax.doubleValue() * discount.doubleValue();
         updateOrder(numItems, allLocal);
 
         System.out.printf("""
@@ -113,7 +120,7 @@ public class NewOrderTransaction extends BaseTransaction {
                 w_id, d_id, c_id,
                 c_last, c_credit, c_discount,
                 w_tax, d_tax,
-                n, o_entry_d,
+                order_id, o_entry_d,
                 numItems, totalAmount);
         for (int i = 0; i < orderItems.size(); i++) {
             OrderedItem item = orderItems.get(i);
@@ -134,8 +141,8 @@ public class NewOrderTransaction extends BaseTransaction {
 
         ResultSet rs = this.session.execute(query);
         for (Row row : rs.all()) {
-            d_tax = row.getDouble("D_TAX");
-            n = row.getInt("D_NEXT_O_ID");
+            d_tax = row.getBigDecimal("D_TAX");
+            order_id = row.getInt("D_NEXT_O_ID");
 //        System.out.println(d_tax + " " + n);
         }
     }
@@ -160,7 +167,7 @@ public class NewOrderTransaction extends BaseTransaction {
         for (Row row : rs.all()) {
             c_last = row.getString("C_LAST");
             c_credit = row.getString("C_CREDIT");
-            c_discount = row.getDouble("C_DISCOUNT");
+            c_discount = row.getBigDecimal("C_DISCOUNT");
 //        System.out.println(c_id + ": " + c_last + " " + c_credit + " " + c_discount);
         }
     }
@@ -174,7 +181,7 @@ public class NewOrderTransaction extends BaseTransaction {
 
         ResultSet rs = this.session.execute(query);
         for (Row row : rs.all()) {
-            w_tax = row.getDouble("W_TAX");
+            w_tax = row.getBigDecimal("W_TAX");
 //        System.out.println(w_id + ": " + w_tax);
         }
     }
@@ -189,45 +196,47 @@ public class NewOrderTransaction extends BaseTransaction {
         ResultSet rs = this.session.execute(query);
         for (Row row : rs.all()) {
             i_name = row.getString("I_NAME");
-            i_price = row.getDouble("I_PRICE");
+            i_price = row.getBigDecimal("I_PRICE");
 //        System.out.println(i_id + ": " + i_name + " " + i_price);
         }
     }
 
     private void queryStock(int i_id) {
         String query = String.format("""
-                SELECT S_QUANTITY
+                SELECT S_QUANTITY, S_YTD
                 FROM Stock
                 WHERE S_W_ID = %d AND S_I_ID = %d
                 """, w_id, i_id);
 
         ResultSet rs = this.session.execute(query);
         for (Row row : rs.all()) {
-            s_quantity = row.getInt("S_QUANTITY");
+            s_quantity = row.getBigDecimal("S_QUANTITY");
+            s_ytd = row.getBigDecimal("S_YTD");
 //        System.out.println(w_id + "," + i_id + ": " + s_quantity);
         }
     }
 
     private int checkQuantity(int quantity) {
-        int adjustedQuantity = s_quantity - quantity;
+        int adjustedQuantity = s_quantity.subtract(new BigDecimal(quantity)).intValue();
         if (adjustedQuantity < 10) adjustedQuantity = adjustedQuantity + 100;
         return adjustedQuantity;
     }
 
     private void updateStock(int adjustedQty, double quantity, boolean isLocal, int i_id) {
+        BigDecimal qty = s_ytd.add(new BigDecimal(quantity));
         String query;
         if (isLocal) {
             query = String.format("""
                     UPDATE Stock
-                    SET S_QUANTITY = %d, S_YTD = S_YTD+%f, S_ORDER_CNT = S_ORDER_CNT+1
+                    SET S_QUANTITY = %d, S_YTD = %.2f, S_ORDER_CNT = S_ORDER_CNT+1
                     WHERE S_W_ID = %d AND S_I_ID = %d
-                    """, adjustedQty, quantity, w_id, i_id);
+                    """, adjustedQty, qty, w_id, i_id);
         } else {
             query = String.format("""
                     UPDATE Stock
-                    SET S_QUANTITY = %d, S_YTD = S_YTD+%f, S_ORDER_CNT = S_ORDER_CNT+1, S_REMOTE_CNT = S_REMOTE_CNT+1
+                    SET S_QUANTITY = %d, S_YTD = %.2f, S_ORDER_CNT = S_ORDER_CNT+1, S_REMOTE_CNT = S_REMOTE_CNT+1
                     WHERE S_W_ID = %d AND S_I_ID = %d
-                    """, adjustedQty, quantity, w_id, i_id);
+                    """, adjustedQty, qty, w_id, i_id);
         }
         this.session.execute(query);
     }
@@ -236,10 +245,10 @@ public class NewOrderTransaction extends BaseTransaction {
         String dist_info = String.format("S_DIST_%02d", d_id);
 
         PreparedStatement pStmt = this.session.prepare("""
-                INSERT INTO order_Line
+                INSERT INTO order_Line (OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER, OL_I_ID, OL_DELIVERY_D, OL_AMOUNT, OL_SUPPLY_W_ID, OL_QUANTITY, OL_DIST_INFO)
                 VALUES (?, ?, ?, ?, ?, null, ?, ?, ?, ?)
                 """);
-        this.session.execute(pStmt.bind(w_id, d_id, n, ol_number, i_id, itemAmount, supply_w_id, quantity, dist_info));
+        this.session.execute(pStmt.bind(w_id, d_id, order_id, ol_number, i_id, new BigDecimal(itemAmount), supply_w_id, new BigDecimal(quantity), dist_info));
     }
 
     private void createNewOrderTemp() {
@@ -247,10 +256,18 @@ public class NewOrderTransaction extends BaseTransaction {
         o_entry_d = String.valueOf(date);
 
         PreparedStatement pStmt = this.session.prepare("""
-                INSERT INTO orders
-                VALUES (?, ?, ?, ?, null, null, null, ?)
+                INSERT INTO orders (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D)
+                VALUES (?, ?, ?, ?, null, null, null, (dateof(now())))
                 """);
-        this.session.execute(pStmt.bind(w_id, d_id, n, c_id, date));
+        this.session.execute(pStmt.bind(w_id, d_id, order_id, c_id));
+    }
+
+    private void createNewOrderByTimestamp() {
+        PreparedStatement pStmt = this.session.prepare("""
+                INSERT INTO Orders_by_timestamp (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D)
+                VALUES (?, ?, ?, ?, null, null, null, (dateof(now())))
+                """);
+        this.session.execute(pStmt.bind(w_id, d_id, order_id, c_id));
     }
 
     private void updateOrder(int numItems, boolean allLocal) {
@@ -260,8 +277,8 @@ public class NewOrderTransaction extends BaseTransaction {
         String query = String.format("""
                 UPDATE Orders
                 SET O_OL_CNT = %d, O_ALL_LOCAL = %d
-                WHERE O_W_ID = %d AND O_D_ID = %d AND O_ID = %d AND O_C_ID = %d
-                """, numItems, o_all_local, w_id, d_id, n, c_id);
+                WHERE O_W_ID = %d AND O_D_ID = %d AND O_ID = %d IF O_C_ID = %d
+                """, numItems, o_all_local, w_id, d_id, order_id, c_id);
         this.session.execute(query);
     }
 }

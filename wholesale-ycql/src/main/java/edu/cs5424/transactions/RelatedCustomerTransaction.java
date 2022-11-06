@@ -23,6 +23,8 @@ public class RelatedCustomerTransaction extends BaseTransaction {
 
     @Override
     public void execute() {
+        System.out.println(String.format("------Related Customer: warehouse id: %d, district id: %d, customer id: %d------", this.C_W_ID, this.C_D_ID, this.C_ID));
+
         try {
             ArrayList<ArrayList<Integer>> relatedCustomers = new ArrayList<ArrayList<Integer>>();
             // Add input customer first
@@ -69,6 +71,7 @@ public class RelatedCustomerTransaction extends BaseTransaction {
                 }
             }
             System.out.println("relatedCustomers: " + relatedCustomers);
+            System.out.println("-----------------------");
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
