@@ -25,7 +25,8 @@
 4. To Run Transactions
   - `cd cs5424-wholesale/output`
   - `java -jar wholesale-ysql.jar run`
-  - 
+
+
 
 # cs5424-wholesale - ycql
 ## Run Project on Server
