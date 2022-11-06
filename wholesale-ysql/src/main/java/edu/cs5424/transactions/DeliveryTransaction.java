@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.sql.Date;
 import java.sql.ResultSet;
 
-public class DeliveryTransaction {
+public class DeliveryTransaction extends BaseTransaction {
     private final int w_id;
     private final int carrier_id;
     private Connection conn = null;
@@ -18,39 +18,42 @@ public class DeliveryTransaction {
     private PreparedStatement customer_update_pstmt;
     private PreparedStatement order_lines_amount_pstmt;
 
-    public DeliveryTransaction(final Connection connection, final String[] parameters) {
-        conn = connection;
-        w_id = Integer.parseInt(parameters[1]);
-        carrier_id = Integer.parseInt(parameters[2]);
+    public DeliveryTransaction(final Connection conn, final String[] params) {
+        super(conn, params);
+
+        this.conn = conn;
+        this.w_id = Integer.parseInt(params[1]);
+        this.carrier_id = Integer.parseInt(params[2]);
+
         try {
-            order_pstmt = conn.prepareStatement(
+            order_pstmt = this.conn.prepareStatement(
                     "SELECT o_id, o_c_id, o_ol_cnt " +
                             "FROM orders " +
                             "WHERE o_w_id = ? AND o_d_id = ? AND o_carrier_id IS NULL " +
                             "ORDER BY o_id " +
                             "LIMIT 1;"
             );
-            order_carrier_pstmt = conn.prepareStatement(
+            order_carrier_pstmt = this.conn.prepareStatement(
                     "UPDATE orders " +
                             "SET o_carrier_id = ? " +
                             "WHERE o_w_id = ? AND o_d_id = ? AND o_id = ? AND o_carrier_id IS NULL;"
             );
-            order_lines_pstmt = conn.prepareStatement(
+            order_lines_pstmt = this.conn.prepareStatement(
                     "UPDATE order_line " +
                             "SET ol_delivery_d = ? " +
                             "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number <= ?;"
             );
-            customer_pstmt = conn.prepareStatement(
+            customer_pstmt = this.conn.prepareStatement(
                     "SELECT c_balance, c_delivery_cnt " +
                             "FROM customer " +
                             "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ?;"
             );
-            order_lines_amount_pstmt = conn.prepareStatement(
+            order_lines_amount_pstmt = this.conn.prepareStatement(
                     "SELECT sum(ol_amount) as sum_ol_amount " +
                             "FROM order_line " +
                             "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ?;"
             );
-            customer_update_pstmt = conn.prepareStatement(
+            customer_update_pstmt = this.conn.prepareStatement(
                     "UPDATE customer " +
                             "SET c_balance = ?, c_delivery_cnt = ? " +
                             "WHERE c_w_id = ? AND c_d_id = ? AND c_id = ? AND c_delivery_cnt = ?;"
@@ -60,7 +63,10 @@ public class DeliveryTransaction {
         }
     }
 
+    @Override
     public void execute() {
+        System.out.println(String.format("------Delivery: warehouse id: %d, carrier id: %d------", this.w_id, this.carrier_id));
+
         PreparedStatement ptmt = null;
         for (int d_id = 1; d_id <= 10; d_id++) {
             int o_id = -1;
@@ -73,12 +79,14 @@ public class DeliveryTransaction {
                 ptmt.setInt(2, d_id);
 
                 ResultSet order = ptmt.executeQuery();
-                if (order == null) continue;
-                else order.next();
-                o_id = order.getInt("o_id");
-                c_id = order.getInt("o_c_id");
-                o_ol_cnt = order.getBigDecimal("o_ol_cnt").intValue();
-
+                if (order == null) {
+                    continue;
+                }
+                while (order.next()) {
+                    o_id = order.getInt("o_id");
+                    c_id = order.getInt("o_c_id");
+                    o_ol_cnt = order.getBigDecimal("o_ol_cnt").intValue();
+                }
 
                 //update the order with carrier
                 ptmt = order_carrier_pstmt;
@@ -113,11 +121,15 @@ public class DeliveryTransaction {
                 ResultSet amount = ptmt.executeQuery();
                 if (amount == null) throw new IllegalArgumentException("No matching orderline");
 
-                amount.next();
-                customer.next();
-                BigDecimal c_balance = amount.getBigDecimal("sum_ol_amount");
-                c_balance.add(customer.getBigDecimal("c_balance"));
-                int c_delivery_cnt = customer.getInt("c_delivery_cnt") + 1;
+                BigDecimal c_balance = new BigDecimal(-1);
+                int c_delivery_cnt = -1;
+                while (amount.next()) {
+                    c_balance = amount.getBigDecimal("sum_ol_amount");
+                }
+                while (customer.next()) {
+                    c_balance.add(customer.getBigDecimal("c_balance"));
+                    c_delivery_cnt = customer.getInt("c_delivery_cnt") + 1;
+                }
 
                 ptmt = customer_update_pstmt;
                 ptmt.setBigDecimal(1, c_balance);
@@ -134,5 +146,6 @@ public class DeliveryTransaction {
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
         }
+        System.out.println("-----------------------");
     }
 }
