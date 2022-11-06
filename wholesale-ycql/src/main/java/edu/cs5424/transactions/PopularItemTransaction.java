@@ -3,14 +3,7 @@ package edu.cs5424.transactions;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import jnr.ffi.annotations.In;
-import org.apache.commons.collections.MapIterator;
 
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,7 +20,7 @@ public class PopularItemTransaction {
         public Integer ol_quantity;
         public Integer ol_i_id;
 
-        public OrderLine(Integer ol_o_id, Integer ol_d_id, Integer ol_w_id, Integer ol_quantity, Integer ol_i_id){
+        public OrderLine(Integer ol_o_id, Integer ol_d_id, Integer ol_w_id, Integer ol_quantity, Integer ol_i_id) {
             this.ol_o_id = ol_o_id;
             this.ol_d_id = ol_d_id;
             this.ol_w_id = ol_w_id;
@@ -41,7 +34,7 @@ public class PopularItemTransaction {
         public String c_middle;
         public String c_last;
 
-        public Customer(String c_first, String c_middle, String c_last){
+        public Customer(String c_first, String c_middle, String c_last) {
             this.c_first = c_first;
             this.c_middle = c_middle;
             this.c_last = c_last;
@@ -81,7 +74,7 @@ public class PopularItemTransaction {
         List<String> setSOrderIDList = new ArrayList<>();
         for (Row row : SetSForOrders.all()) {
             setSOrderIDList.add(
-                Integer.toString(row.getInt("o_id"))
+                    Integer.toString(row.getInt("o_id"))
             );
         }
 
@@ -114,38 +107,38 @@ public class PopularItemTransaction {
         List<OrderLine> orderLinesResult = new ArrayList<>();
 
         String ol_o_id_condition = olToMaxQuantity.keySet()
-            .stream().map(k -> k.get(0).toString())
-            .collect(Collectors.joining(","));
+                .stream().map(k -> k.get(0).toString())
+                .collect(Collectors.joining(","));
         String ol_quantity_condition = olToMaxQuantity.values()
-            .stream().map(Object::toString)
-            .collect(Collectors.joining(","));
+                .stream().map(Object::toString)
+                .collect(Collectors.joining(","));
 
         ResultSet finalOrderLinesRes = this.session.execute(
-            String.format(
-                "select * from wholesale.order_line\n" +
-                "where ol_o_id in (%s) and ol_d_id = %d and ol_w_id = %d and ol_quantity in (%s)",
-                ol_o_id_condition, this.d_id, this.w_id, ol_quantity_condition
-            )
+                String.format(
+                        "select * from wholesale.order_line\n" +
+                                "where ol_o_id in (%s) and ol_d_id = %d and ol_w_id = %d and ol_quantity in (%s)",
+                        ol_o_id_condition, this.d_id, this.w_id, ol_quantity_condition
+                )
         );
 
         // ol_o_id -> ol_quantity
         HashMap<Integer, List<Integer>> tempRes = new HashMap<>();
         for (Row row : finalOrderLinesRes.all()) {
             tempRes.put(
-                row.getInt("ol_o_id"),
-                Arrays.asList(
-                    row.getBigDecimal("ol_quantity").intValue(), row.getInt("ol_i_id")
-                )
+                    row.getInt("ol_o_id"),
+                    Arrays.asList(
+                            row.getBigDecimal("ol_quantity").intValue(), row.getInt("ol_i_id")
+                    )
             );
         }
 
         olToMaxQuantity.forEach((k, v) -> {
             orderLinesResult.add(new OrderLine(
-                k.get(0), // ol_o_id
-                this.d_id, // ol_d_id
-                this.w_id, // ol_w_id
-                tempRes.get(k.get(0)).get(0), // ol_quantity
-                tempRes.get(k.get(0)).get(1) // ol_i_id
+                    k.get(0), // ol_o_id
+                    this.d_id, // ol_d_id
+                    this.w_id, // ol_w_id
+                    tempRes.get(k.get(0)).get(0), // ol_quantity
+                    tempRes.get(k.get(0)).get(1) // ol_i_id
             ));
         });
 
@@ -153,16 +146,16 @@ public class PopularItemTransaction {
         HashMap<Integer, String> oIdToOEntryD = new HashMap<>();
         HashMap<Integer, String> oIdToOcId = new HashMap<>();  // customer id
         for (
-            Row row: this.session.execute(
+                Row row : this.session.execute(
                 String.format(
-                    "select * from wholesale.orders\n" +
-                    "where o_w_id = %s and o_d_id = %s and o_id in (%s)",
-                    this.w_id, this.d_id,
-                    orderLinesResult.stream().map(ol -> ol.ol_o_id.toString())
-                    .collect(Collectors.joining(","))
+                        "select * from wholesale.orders\n" +
+                                "where o_w_id = %s and o_d_id = %s and o_id in (%s)",
+                        this.w_id, this.d_id,
+                        orderLinesResult.stream().map(ol -> ol.ol_o_id.toString())
+                                .collect(Collectors.joining(","))
                 )
-            ).all()
-        ){
+        ).all()
+        ) {
             oIdToOEntryD.put(row.getInt("o_id"), row.getInstant("o_entry_d").toString());
             oIdToOcId.put(row.getInt("o_id"), Integer.toString(row.getInt("o_c_id")));
         }
@@ -170,56 +163,55 @@ public class PopularItemTransaction {
         // related customers
         HashMap<String, Customer> cIdToCustomer = new HashMap<>();  // customer id
         for (
-            Row row: this.session.execute(
+                Row row : this.session.execute(
                 String.format(
-                    "select * from wholesale.customer\n" +
-                    "where c_w_id = %s and c_d_id = %s and c_id in (%s)",
-                    this.w_id, this.d_id, String.join(",", oIdToOcId.values())
+                        "select * from wholesale.customer\n" +
+                                "where c_w_id = %s and c_d_id = %s and c_id in (%s)",
+                        this.w_id, this.d_id, String.join(",", oIdToOcId.values())
                 )
-            ).all()
-        ){
+        ).all()
+        ) {
             cIdToCustomer.put(
-                Integer.toString(row.getInt("c_id")), new Customer(
-                    row.getString("c_first"),
-                    row.getString("c_middle"),
-                    row.getString("c_last")
-                )
+                    Integer.toString(row.getInt("c_id")), new Customer(
+                            row.getString("c_first"),
+                            row.getString("c_middle"),
+                            row.getString("c_last")
+                    )
             );
         }
 
         // related items
         HashMap<String, String> iIdToItemName = new HashMap<>();  // item id
         for (
-            Row row: this.session.execute(
+                Row row : this.session.execute(
                 String.format(
-                    "select * from wholesale.item\n" +
-                    "where i_id in (%s)",
-                    orderLinesResult.stream().map(ol -> ol.ol_i_id.toString())
-                    .collect(Collectors.joining(","))
+                        "select * from wholesale.item\n" +
+                                "where i_id in (%s)",
+                        orderLinesResult.stream().map(ol -> ol.ol_i_id.toString())
+                                .collect(Collectors.joining(","))
                 )
-            ).all()
-        ){
+        ).all()
+        ) {
             iIdToItemName.put(
-                Integer.toString(row.getInt("i_id")),
-                row.getString("i_name")
+                    Integer.toString(row.getInt("i_id")),
+                    row.getString("i_name")
             );
         }
 
         // percentage
         HashMap<Integer, Double> itemIdOrderCounter = new HashMap<>();
-        for (OrderLine orderLine: orderLinesResult) {
-            if (!itemIdOrderCounter.containsKey(orderLine.ol_i_id)){
+        for (OrderLine orderLine : orderLinesResult) {
+            if (!itemIdOrderCounter.containsKey(orderLine.ol_i_id)) {
                 itemIdOrderCounter.put(orderLine.ol_i_id, 1.0);
                 continue;
             }
             itemIdOrderCounter.put(
-                orderLine.ol_i_id,
-                itemIdOrderCounter.get(orderLine.ol_i_id) + 1
+                    orderLine.ol_i_id,
+                    itemIdOrderCounter.get(orderLine.ol_i_id) + 1
             );
         }
 
-
-        for (OrderLine ol: orderLinesResult) {
+        for (OrderLine ol : orderLinesResult) {
             Customer c = cIdToCustomer.get(oIdToOcId.get(ol.ol_o_id));
             System.out.printf(
                     "(D_ID, W_ID, L, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
