@@ -15,17 +15,19 @@ public class Main {
                 "yugabyte",
                 "yugabyte");
 
-        if (args.length > 0) {
+        if (args.length == 0) {
 //            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
-            String bathPath = String.format("./scripts/");
+            String bathPath = String.format("./scripts/ysql");
             DataProcessor processor = new DataProcessor(conn, bathPath);
 
-            switch (args[0]) {
+            String cmd = "run";
+            switch (cmd) {
                 case "run":
                     Main main = new Main();
-                    for (int i = 0; i <= 19; i++) {
+                    for (int i = 0; i < 1; i++) {
+                        String filename = "/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt";
 //                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
-                        String filename = String.format("./xact/%d.txt", i);
+//                        String filename = String.format("./xact/%d.txt", i);
                         main.run(conn, filename);
                     }
                     break;
@@ -44,6 +46,8 @@ public class Main {
 
     public void run(Connection conn, String path) throws SQLException {
         try {
+            BaseTransaction transaction = null;
+
             File file = new File(path);    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
@@ -52,47 +56,45 @@ public class Main {
             while ((line = br.readLine()) != null) {
                 String[] parameters = line.split(",");
                 switch (parameters[0]) {
-//                    case "N":
-//                        // Need to handle the multiple-line inputs!
-//                        NewOrderTransaction transactionN  = new NewOrderTransaction(conn, parameters);
-//                        transactionR.execute();
-//                        break;
-//                    case "P":
-//                        PaymentTransaction transactionP = new PaymentTransaction(conn, parameters);
-//                        transactionP.execute();
-//                        break;
+                    case "N":
+                        // Need to handle the multiple-line inputs!
+                        transaction = new NewOrderTransaction(conn, br, parameters);
+                        break;
+                    case "P":
+                        transaction = new PaymentTransaction(conn, parameters);
+                        break;
                     case "D":
-                        DeliveryTransaction transactionD = new DeliveryTransaction(conn, parameters);
-                        transactionD.execute();
+                        transaction = new DeliveryTransaction(conn, parameters);
                         break;
                     case "O":
-                        OrderStatusTransaction transactionO = new OrderStatusTransaction(conn, parameters);
-                        transactionO.execute();
+                        transaction = new OrderStatusTransaction(conn, parameters);
                         break;
                     case "S":
-                        StockLevelTransaction transactionS = new StockLevelTransaction(conn, parameters);
-                        transactionS.execute();
+                        transaction = new StockLevelTransaction(conn, parameters);
                         break;
                     case "I":
-                        PopularItemTransaction transactionI = new PopularItemTransaction(conn, parameters);
-                        transactionI.execute();
+                        transaction = new PopularItemTransaction(conn, parameters);
                         break;
                     case "T":
-                        TopBalanceTransaction transactionT = new TopBalanceTransaction(conn, parameters);
-                        transactionT.execute();
+                        transaction = new TopBalanceTransaction(conn, parameters);
                         break;
                     case "R":
-                        RelatedCustomerTransaction transactionR = new RelatedCustomerTransaction(conn, parameters);
-                        transactionR.execute();
+                        transaction = new RelatedCustomerTransaction(conn, parameters);
                         break;
                     default:
+                        System.err.println("Unrecognised transaction encountered!");
+                        transaction = null;
                         break;
                 }
+
+                if (transaction != null)
+                    transaction.execute();
+                else
+                    System.err.println("Transaction not executed!");
             }
 
             fr.close();
             br.close();
-            conn.close();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }

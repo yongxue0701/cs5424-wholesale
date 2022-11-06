@@ -15,8 +15,36 @@ public class Main {
                 .withKeyspace("wholesale")
                 .build();
 
+        if (args.length > 0) {
+//            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
+            String bathPath = String.format("./scripts/ycql");
+            DataProcessor processor = new DataProcessor(session, bathPath);
+
+            switch (args[0]) {
+                case "run":
+                    Main main = new Main();
+                    for (int i = 0; i <= 19; i++) {
+//                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
+                        String filename = String.format("./xact/%d.txt", i);
+                        main.run(session, filename);
+                    }
+                    break;
+                case "create":
+                    processor.createTable();
+                    break;
+                case "drop":
+                    processor.dropTable();
+                    break;
+                case "load":
+                    processor.loadData();
+                    break;
+            }
+        }
+    }
+
+    public void run(CqlSession session, String path) {
         try {
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
+            File file = new File(path);    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
             String line;

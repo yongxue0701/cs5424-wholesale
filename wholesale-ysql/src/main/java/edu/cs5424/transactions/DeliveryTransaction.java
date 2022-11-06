@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.sql.Date;
 import java.sql.ResultSet;
 
-public class DeliveryTransaction {
+public class DeliveryTransaction extends BaseTransaction {
     private final int w_id;
     private final int carrier_id;
     private Connection conn = null;
@@ -18,10 +18,12 @@ public class DeliveryTransaction {
     private PreparedStatement customer_update_pstmt;
     private PreparedStatement order_lines_amount_pstmt;
 
-    public DeliveryTransaction(final Connection connection, final String[] parameters) {
-        conn = connection;
-        w_id = Integer.parseInt(parameters[1]);
-        carrier_id = Integer.parseInt(parameters[2]);
+    public DeliveryTransaction(final Connection conn, final String[] params) {
+        super(conn, params);
+
+        this.conn = conn;
+        w_id = Integer.parseInt(params[1]);
+        carrier_id = Integer.parseInt(params[2]);
         try {
             order_pstmt = conn.prepareStatement(
                     "SELECT o_id, o_c_id, o_ol_cnt " +
@@ -60,6 +62,7 @@ public class DeliveryTransaction {
         }
     }
 
+    @Override
     public void execute() {
         PreparedStatement ptmt = null;
         for (int d_id = 1; d_id <= 10; d_id++) {
@@ -73,12 +76,11 @@ public class DeliveryTransaction {
                 ptmt.setInt(2, d_id);
 
                 ResultSet order = ptmt.executeQuery();
-                if (order == null) continue;
-                else order.next();
-                o_id = order.getInt("o_id");
-                c_id = order.getInt("o_c_id");
-                o_ol_cnt = order.getBigDecimal("o_ol_cnt").intValue();
-
+                while (order.next()) {
+                    o_id = order.getInt("o_id");
+                    c_id = order.getInt("o_c_id");
+                    o_ol_cnt = order.getBigDecimal("o_ol_cnt").intValue();
+                }
 
                 //update the order with carrier
                 ptmt = order_carrier_pstmt;
@@ -113,11 +115,15 @@ public class DeliveryTransaction {
                 ResultSet amount = ptmt.executeQuery();
                 if (amount == null) throw new IllegalArgumentException("No matching orderline");
 
-                amount.next();
-                customer.next();
-                BigDecimal c_balance = amount.getBigDecimal("sum_ol_amount");
-                c_balance.add(customer.getBigDecimal("c_balance"));
-                int c_delivery_cnt = customer.getInt("c_delivery_cnt") + 1;
+                BigDecimal c_balance = new BigDecimal(-1);
+                int c_delivery_cnt = -1;
+                while (amount.next()) {
+                    c_balance = amount.getBigDecimal("sum_ol_amount");
+                }
+                while (customer.next()) {
+                    c_balance.add(customer.getBigDecimal("c_balance"));
+                    c_delivery_cnt = customer.getInt("c_delivery_cnt") + 1;
+                }
 
                 ptmt = customer_update_pstmt;
                 ptmt.setBigDecimal(1, c_balance);

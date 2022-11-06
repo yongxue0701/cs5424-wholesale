@@ -3,7 +3,7 @@ package edu.cs5424.transactions;
 import java.sql.*;
 import java.util.*;
 
-public class StockLevelTransaction {
+public class StockLevelTransaction extends BaseTransaction {
     private final String QUERY_GET_NEXT_ORDER_ID = "SELECT d_next_o_id FROM district " +
             "WHERE d_w_id = %d " +
             "AND d_id = %d;";
@@ -24,15 +24,18 @@ public class StockLevelTransaction {
     private final int stockThreshold;
     private final int numOfLastOrders;
     private Connection conn = null;
-    
-    public StockLevelTransaction(final Connection connection, final String[] parameters) {
-        this.conn = connection;
-        this.warehouseID = Integer.parseInt(parameters[1]);
-        this.districtID = Integer.parseInt(parameters[2]);
-        this.stockThreshold = Integer.parseInt(parameters[3]);
-        this.numOfLastOrders = Integer.parseInt(parameters[4]);
+
+    public StockLevelTransaction(final Connection conn, final String[] params) {
+        super(conn, params);
+
+        this.conn = conn;
+        this.warehouseID = Integer.parseInt(params[1]);
+        this.districtID = Integer.parseInt(params[2]);
+        this.stockThreshold = Integer.parseInt(params[3]);
+        this.numOfLastOrders = Integer.parseInt(params[4]);
     }
 
+    @Override
     public void execute() {
         try {
             System.out.println(String.format("------Stock Level: warehouse id: %d, district id: %d, stock threshold: %d, last order: %d------", this.warehouseID, this.districtID, this.stockThreshold, this.numOfLastOrders));

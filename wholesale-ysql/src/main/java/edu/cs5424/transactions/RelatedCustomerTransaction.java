@@ -9,21 +9,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class RelatedCustomerTransaction {
+public class RelatedCustomerTransaction extends BaseTransaction {
     private final int C_W_ID;
     private final int C_D_ID;
     private final int C_ID;
     private Connection conn = null;
 
-    public RelatedCustomerTransaction(final Connection connection, final String[] parameters) {
-        conn = connection;
-        C_W_ID = Integer.parseInt(parameters[1]);
-        C_D_ID = Integer.parseInt(parameters[2]);
-        C_ID = Integer.parseInt(parameters[3]);
+    public RelatedCustomerTransaction(final Connection conn, final String[] params) {
+        super(conn, params);
+
+        this.conn = conn;
+        C_W_ID = Integer.parseInt(params[1]);
+        C_D_ID = Integer.parseInt(params[2]);
+        C_ID = Integer.parseInt(params[3]);
     }
 
+    @Override
     public void execute() {
         try {
+            System.out.println(String.format("------Related Customer: warehouse id: %d, district id: %d, customer id: %d------", this.C_W_ID, this.C_D_ID, this.C_ID));
+
             Statement stmt = conn.createStatement();
 
             System.out.println(String.format("This customer: C_W_ID = %s, C_D_ID = %s, C_ID = %s",
@@ -145,6 +150,7 @@ public class RelatedCustomerTransaction {
 //                break; // test one other customer only
             }
             System.out.println("relatedCustomers: " + relatedCustomers);
+            System.out.println("-----------------------");
         } catch (SQLException e) {//SQLException
             System.err.println(e.getMessage());
         }

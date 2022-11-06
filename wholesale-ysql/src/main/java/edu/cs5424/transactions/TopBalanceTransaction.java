@@ -7,27 +7,32 @@ import java.sql.SQLException;
 import java.sql.Date;
 import java.sql.ResultSet;
 
-public class TopBalanceTransaction {
+public class TopBalanceTransaction extends BaseTransaction {
     private PreparedStatement statement;
 
-    public TopBalanceTransaction(final Connection connection, final String[] parameters) {
+    public TopBalanceTransaction(final Connection conn, final String[] params) {
+        super(conn, params);
+
         try {
-            statement = connection.prepareStatement(
+            statement = conn.prepareStatement(
                     "select c_first, c_middle, c_last, c_balance, w_name, d_name from (\n" +
-                    "    select c_w_id, c_first, c_middle, c_last, c_balance\n" +
-                    "    from customer\n" +
-                    "    order by c_balance desc\n" +
-                    "    limit 10\n" +
-                    ") as c_new\n" +
-                    "left join warehouse on c_new.c_w_id = warehouse.w_id\n" +
-                    "left join district d on d.d_w_id = warehouse.w_id;"
+                            "    select c_w_id, c_first, c_middle, c_last, c_balance\n" +
+                            "    from customer\n" +
+                            "    order by c_balance desc\n" +
+                            "    limit 10\n" +
+                            ") as c_new\n" +
+                            "left join warehouse on c_new.c_w_id = warehouse.w_id\n" +
+                            "left join district d on d.d_w_id = warehouse.w_id;"
             );
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void execute() {
+        System.out.println(String.format("------Top Balance------"));
+
         ResultSet result = null;
         try {
             result = statement.executeQuery();
@@ -46,5 +51,6 @@ public class TopBalanceTransaction {
             e.printStackTrace();
         }
 
+        System.out.println("-----------------------");
     }
 }
