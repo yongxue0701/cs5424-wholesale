@@ -6,6 +6,10 @@
 # cs5424-wholesale - ysql
 ## Run Project on Server
 
+- Scripts to create schema & load data: `./output/scripts/ysql/*`
+- Data: `./output/scripts/data/*`
+- Demo: `./output/xact/demo.txt`
+
 0. To Increase Server Timeout
   - `./bin/yugabyted stop`
   - `./bin/yugabyted start --tserver_flags="pg_yb_session_timeout_ms=60000000"`
@@ -27,9 +31,12 @@
   - `java -jar wholesale-ysql.jar run`
 
 
-
 # cs5424-wholesale - ycql
 ## Run Project on Server
+
+- Scripts to create schema & load data: `./output/scripts/ycql/*`
+- Data: `./output/scripts/data/*`
+- Demo: `./output/xact/demo.txt`
 
 0. To Increase Server Timeout
   - `./bin/yugabyted stop`
