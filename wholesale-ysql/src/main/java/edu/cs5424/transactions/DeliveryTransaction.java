@@ -22,8 +22,9 @@ public class DeliveryTransaction extends BaseTransaction {
         super(conn, params);
 
         this.conn = conn;
-        w_id = Integer.parseInt(params[1]);
-        carrier_id = Integer.parseInt(params[2]);
+        this.w_id = Integer.parseInt(params[1]);
+        this.carrier_id = Integer.parseInt(params[2]);
+
         try {
             order_pstmt = conn.prepareStatement(
                     "SELECT o_id, o_c_id, o_ol_cnt " +
@@ -64,6 +65,8 @@ public class DeliveryTransaction extends BaseTransaction {
 
     @Override
     public void execute() {
+        System.out.println(String.format("------Delivery: warehouse id: %d, carrier id: %d------", this.w_id, this.carrier_id));
+
         PreparedStatement ptmt = null;
         for (int d_id = 1; d_id <= 10; d_id++) {
             int o_id = -1;
@@ -139,6 +142,7 @@ public class DeliveryTransaction extends BaseTransaction {
 
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
+            System.out.println("-----------------------");
         }
     }
 }

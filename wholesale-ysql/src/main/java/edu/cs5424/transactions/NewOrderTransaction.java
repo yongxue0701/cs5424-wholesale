@@ -32,10 +32,10 @@ public class NewOrderTransaction extends BaseTransaction {
 
         this.conn = conn;
         this.br = br;
-        c_id = Integer.parseInt(params[1]);
-        w_id = Integer.parseInt(params[2]);
-        d_id = Integer.parseInt(params[3]);
-        numLines = Integer.parseInt(params[4]);
+        this.c_id = Integer.parseInt(params[1]);
+        this.w_id = Integer.parseInt(params[2]);
+        this.d_id = Integer.parseInt(params[3]);
+        this.numLines = Integer.parseInt(params[4]);
     }
 
     @Override

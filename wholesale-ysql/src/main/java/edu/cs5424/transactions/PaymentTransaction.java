@@ -17,10 +17,10 @@ public class PaymentTransaction extends BaseTransaction {
     public PaymentTransaction(Connection conn, String[] params) {
         super(conn, params);
 
-        w_id = Integer.parseInt(params[1]);
-        d_id = Integer.parseInt(params[2]);
-        c_id = Integer.parseInt(params[3]);
-        payment = Double.parseDouble(params[4]);
+        this.w_id = Integer.parseInt(params[1]);
+        this.d_id = Integer.parseInt(params[2]);
+        this.c_id = Integer.parseInt(params[3]);
+        this.payment = Double.parseDouble(params[4]);
     }
 
     @Override
