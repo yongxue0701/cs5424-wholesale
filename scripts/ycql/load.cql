@@ -21,10 +21,14 @@ COPY orders (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID,
     FROM '/Users/y.peng/Desktop/nus/Projects/cs5424-wholesale/inputs/data/order.csv'
     WITH DELIMITER = ',' AND NULL = 'null';
 
-COPY Orders_by_timestamp (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, 
+COPY orders_by_timestamp (O_W_ID, O_D_ID, O_ID, O_C_ID, O_CARRIER_ID, 
                     O_OL_CNT, O_ALL_LOCAL, O_ENTRY_D)
     FROM '/Users/y.peng/Desktop/nus/Projects/cs5424-wholesale/inputs/data/order.csv'
     WITH DELIMITER = ',' AND NULL = 'null';
+
+COPY orders (O_W_ID, O_D_ID, O_ID,O_CARRIER_ID)
+    FROM '/Users/y.peng/Desktop/nus/Projects/cs5424-wholesale/inputs/data/carrier.csv'
+    WITH DELIMITER = ',';
 
 COPY item (I_ID, I_NAME, I_PRICE, LIM_ID, I_DATA)
     FROM '/Users/y.peng/Desktop/nus/Projects/cs5424-wholesale/inputs/data/item.csv'
