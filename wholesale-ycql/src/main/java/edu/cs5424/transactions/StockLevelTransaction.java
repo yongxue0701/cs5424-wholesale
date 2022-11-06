@@ -59,12 +59,15 @@ public class StockLevelTransaction extends BaseTransaction {
             for (Row row : lastOrders.all()) {
                 ResultSet items = this.session.execute(String.format(QUERY_GET_ITEM_IDS, this.warehouseID, this.districtID, row.getInt("o_id")));
 
+                System.out.println(String.format(QUERY_GET_ITEM_IDS, this.warehouseID, this.districtID, row.getInt("o_id")));
                 for (Row row2 : items.all()) {
                     itemIDs.add(row2.getInt("ol_i_id"));
                 }
             }
 
+            System.out.println(itemIDs);
             for (int itemID : itemIDs) {
+                System.out.println(String.format(QUERY_GET_STOCK_QTY, this.warehouseID, itemID));
                 ResultSet stockQty = this.session.execute(String.format(QUERY_GET_STOCK_QTY, this.warehouseID, itemID));
 
                 for (Row row2 : stockQty.all()) {

@@ -15,19 +15,15 @@ public class Main {
                 "yugabyte",
                 "yugabyte");
 
-        if (args.length == 0) {
-//            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
+        if (args.length > 0) {
             String bathPath = String.format("./scripts/ysql");
             DataProcessor processor = new DataProcessor(conn, bathPath);
 
-            String cmd = "run";
-            switch (cmd) {
+            switch (args[0]) {
                 case "run":
                     Main main = new Main();
                     for (int i = 0; i < 1; i++) {
-                        String filename = "/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt";
-//                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
-//                        String filename = String.format("./xact/%d.txt", i);
+                        String filename = String.format("./xact/demo.txt", i);
                         main.run(conn, filename);
                     }
                     break;
