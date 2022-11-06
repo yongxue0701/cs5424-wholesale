@@ -1,128 +1,233 @@
 package edu.cs5424.transactions;
 
-import java.math.BigDecimal;
-import java.sql.*;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import jnr.ffi.annotations.In;
+import org.apache.commons.collections.MapIterator;
+
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PopularItemTransaction {
-    private PreparedStatement data_statement;
-    private PreparedStatement percentage_statement;
+    private CqlSession session = null;
+    private Integer w_id = null;
+    private Integer d_id = null;
+    private Integer l = null;
 
-    public PopularItemTransaction(final Connection connection, final String[] parameters) {
-        String w_id = parameters[1];
-        String d_id = parameters[2];
-        // number of last orders
-        String l = parameters[3];
+    class OrderLine {
+        public Integer ol_o_id;
+        public Integer ol_d_id;
+        public Integer ol_w_id;
+        public Integer ol_quantity;
+        public Integer ol_i_id;
 
-        try {
-            data_statement = connection.prepareStatement(
-                MessageFormat.format(
-                "select order_line.ol_d_id, order_line.ol_w_id, o_id, o_entry_d, c_first, c_middle, c_last, i_name, ol_quantity\n" +
-                        "from order_line\n" +
-                        "join (\n" +
-                        "    select t.ol_o_id, t.ol_d_id, t.ol_w_id, max(ol_quantity) as max_ol_quantity\n" +
-                        "    from order_line as t\n" +
-                        "    where t.ol_o_id in ( -- collection S\n" +
-                        "        select o_id from orders\n" +
-                        "        join district d on orders.o_d_id = d.d_id\n" +
-                        "        where d.d_id =  {0} \n" +
-                        "            and d.d_w_id = {1}\n" +
-                        "            and orders.o_d_id = {0}\n" +
-                        "            and orders.o_w_id = {1}\n" +
-                        "            and orders.o_id >= d_next_o_id - {2}\n" +
-                        "            and orders.o_id < d_next_o_id\n" +
-                        "    )\n" +
-                        "    and t.ol_d_id = {0}\n" +
-                        "    and t.ol_w_id= {1}\n" +
-                        "    group by t.ol_o_id, t.ol_d_id, t.ol_w_id\n" +
-                        ") as Ix\n" +
-                        "on order_line.ol_o_id = Ix.ol_o_id\n" +
-                        "    and order_line.ol_d_id = Ix.ol_d_id\n" +
-                        "    and order_line.ol_w_id = Ix.ol_w_id\n" +
-                        "    and order_line.ol_quantity = Ix.max_ol_quantity\n" +
-                        "join orders o\n" +
-                        "    on order_line.ol_w_id = o.o_w_id and order_line.ol_d_id = o.o_d_id and order_line.ol_o_id = o.o_id\n" +
-                        "join customer c\n" +
-                        "    on o.o_w_id = c.c_w_id and o.o_d_id = c.c_d_id and o.o_c_id = c.c_id\n" +
-                        "join item on order_line.ol_i_id = item.i_id;",
-                        d_id, w_id, l
-                )
-            );
-
-            percentage_statement = connection.prepareStatement(
-                MessageFormat.format(
-            "select i_name, round( cast(count(order_line.ol_o_id) as decimal) / {2}, 4 ) as percent\n" +
-                    "from order_line\n" +
-                    "join (\n" +
-                    "    select t.ol_o_id, t.ol_d_id, t.ol_w_id, max(ol_quantity) as max_ol_quantity\n" +
-                    "    from order_line as t\n" +
-                    "    where t.ol_o_id in ( -- collection S\n" +
-                    "        select o_id from orders\n" +
-                    "        join district d on orders.o_d_id = d.d_id\n" +
-                    "        where d.d_id =  {0}\n" +
-                    "            and d.d_w_id = {1}\n" +
-                    "            and orders.o_d_id = {0}\n" +
-                    "            and orders.o_w_id = {1}\n" +
-                    "            and orders.o_id >= d_next_o_id - {2}\n" +
-                    "            and orders.o_id < d_next_o_id\n" +
-                    "    )\n" +
-                    "    and t.ol_d_id = {0}\n" +
-                    "    and t.ol_w_id= {1}\n" +
-                    "    group by t.ol_o_id, t.ol_d_id, t.ol_w_id\n" +
-                    ") as Ix\n" +
-                    "on order_line.ol_o_id = Ix.ol_o_id\n" +
-                    "    and order_line.ol_d_id = Ix.ol_d_id\n" +
-                    "    and order_line.ol_w_id = Ix.ol_w_id\n" +
-                    "    and order_line.ol_quantity = Ix.max_ol_quantity\n" +
-                    "join orders o\n" +
-                    "    on order_line.ol_w_id = o.o_w_id and order_line.ol_d_id = o.o_d_id and order_line.ol_o_id = o.o_id\n" +
-                    "join customer c\n" +
-                    "    on o.o_w_id = c.c_w_id and o.o_d_id = c.c_d_id and o.o_c_id = c.c_id\n" +
-                    "join item on order_line.ol_i_id = item.i_id\n" +
-                    "group by i_name",
-                        d_id, w_id, l
-                )
-            );
-        } catch (SQLException e) {
-            e.printStackTrace();
+        public OrderLine(Integer ol_o_id, Integer ol_d_id, Integer ol_w_id, Integer ol_quantity, Integer ol_i_id){
+            this.ol_o_id = ol_o_id;
+            this.ol_d_id = ol_d_id;
+            this.ol_w_id = ol_w_id;
+            this.ol_quantity = ol_quantity;
+            this.ol_i_id = ol_i_id;
         }
     }
 
+    class Customer {
+        public String c_first;
+        public String c_middle;
+        public String c_last;
+
+        public Customer(String c_first, String c_middle, String c_last){
+            this.c_first = c_first;
+            this.c_middle = c_middle;
+            this.c_last = c_last;
+        }
+    }
+
+    public PopularItemTransaction(final CqlSession session, final String[] parameters) {
+        this.w_id = Integer.parseInt(parameters[1]);
+        this.d_id = Integer.parseInt(parameters[2]);
+        // number of last orders
+        this.l = Integer.parseInt(parameters[3]);
+        this.session = session;
+    }
+
     public void execute() {
-        try {
-            HashMap<String, String> i_name_to_percent = new HashMap<>();
-            ResultSet percentage_result = percentage_statement.executeQuery();
-            while (percentage_result.next()){
-                i_name_to_percent.put(
-                    percentage_result.getString("i_name"),
-                    percentage_result.getString("percent")
-                );
-            }
-
-            ResultSet result = data_statement.executeQuery();
-            while (result.next()) {
-                String d_id = result.getString("ol_d_id");
-                String w_id = result.getString("ol_w_id");
-                String o_id = result.getString("o_id");
-                String o_entry_d = result.getString("o_entry_d");
-                String c_first = result.getString("c_first");
-                String c_middle = result.getString("c_middle");
-                String c_last = result.getString("c_last");
-                String i_name = result.getString("i_name");
-                String ol_quantity = result.getString("ol_quantity");
-
-                System.out.printf(
-                    "(D_ID, W_ID, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
-                    "(%s, %s, %s, %s, %s, %s, %s, %s, %s. %s)\n",
-                    d_id, w_id, o_id, o_entry_d, c_first,
-                    c_middle,c_last,i_name,ol_quantity,
-                    i_name_to_percent.get(i_name)
-                );
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        ResultSet districtRes = this.session.execute(
+                String.format(
+                        "select d_next_o_id from wholesale.district where (d_w_id = %d and d_id = %d)",
+                        this.w_id, this.d_id
+                )
+        );
+        Integer d_next_o_id = null;
+        for (Row row : districtRes.all()) {
+            d_next_o_id = row.getInt("d_next_o_id");
+        }
+        if (d_next_o_id == null) {
+            throw new RuntimeException(String.format("can not get d_next_o_id with (w_id, d_id): (%d, %d)", this.w_id, this.d_id));
         }
 
+        ResultSet SetSForOrders = this.session.execute(
+                String.format(
+                        "select o_id from wholesale.orders\n" +
+                                "where o_d_id = %d and o_w_id = %d and o_id >= %d - %d and o_id < %d",
+                        this.d_id, this.w_id, d_next_o_id, this.l, d_next_o_id
+                )
+        );
+        List<String> setSOrderIDList = new ArrayList<>();
+        for (Row row : SetSForOrders.all()) {
+            setSOrderIDList.add(
+                Integer.toString(row.getInt("o_id"))
+            );
+        }
+
+        ResultSet orderLinesRes = this.session.execute(
+                String.format(
+                        "select ol_o_id, ol_d_id, ol_w_id, ol_quantity from wholesale.order_line\n" +
+                                "where ol_o_id in (%s) and ol_d_id = %d and ol_w_id= %d",
+                        String.join(",", setSOrderIDList), this.d_id, this.w_id
+                )
+        );
+        HashMap<List<Integer>, Integer> olToMaxQuantity = new HashMap<>();
+        for (Row row : orderLinesRes.all()) {
+            Integer ol_o_id = row.getInt("ol_o_id");
+            Integer ol_d_id = row.getInt("ol_d_id");
+            Integer ol_w_id = row.getInt("ol_w_id");
+            Integer ol_quantity = row.getBigDecimal("ol_quantity").intValue();
+
+            List<Integer> key = Arrays.asList(ol_o_id, ol_d_id, ol_w_id);
+            if (!olToMaxQuantity.containsKey(key)) {
+                olToMaxQuantity.put(key, ol_quantity);
+                continue;
+            }
+            Integer val = olToMaxQuantity.get(key);
+            if (val < ol_quantity) {
+                olToMaxQuantity.put(key, val);
+            }
+        }
+
+        // final order lines result
+        List<OrderLine> orderLinesResult = new ArrayList<>();
+
+        String ol_o_id_condition = olToMaxQuantity.keySet()
+            .stream().map(k -> k.get(0).toString())
+            .collect(Collectors.joining(","));
+        String ol_quantity_condition = olToMaxQuantity.values()
+            .stream().map(Object::toString)
+            .collect(Collectors.joining(","));
+
+        ResultSet finalOrderLinesRes = this.session.execute(
+            String.format(
+                "select * from wholesale.order_line\n" +
+                "where ol_o_id in (%s) and ol_d_id = %d and ol_w_id = %d and ol_quantity in (%s)",
+                ol_o_id_condition, this.d_id, this.w_id, ol_quantity_condition
+            )
+        );
+
+        // ol_o_id -> ol_quantity
+        HashMap<Integer, List<Integer>> tempRes = new HashMap<>();
+        for (Row row : finalOrderLinesRes.all()) {
+            tempRes.put(
+                row.getInt("ol_o_id"),
+                Arrays.asList(
+                    row.getBigDecimal("ol_quantity").intValue(), row.getInt("ol_i_id")
+                )
+            );
+        }
+
+        olToMaxQuantity.forEach((k, v) -> {
+            orderLinesResult.add(new OrderLine(
+                k.get(0), // ol_o_id
+                this.d_id, // ol_d_id
+                this.w_id, // ol_w_id
+                tempRes.get(k.get(0)).get(0), // ol_quantity
+                tempRes.get(k.get(0)).get(1) // ol_i_id
+            ));
+        });
+
+        // related orders
+        HashMap<Integer, String> oIdToOEntryD = new HashMap<>();
+        HashMap<Integer, String> oIdToOcId = new HashMap<>();  // customer id
+        for (
+            Row row: this.session.execute(
+                String.format(
+                    "select * from wholesale.orders\n" +
+                    "where o_w_id = %s and o_d_id = %s and o_id in (%s)",
+                    this.w_id, this.d_id,
+                    orderLinesResult.stream().map(ol -> ol.ol_o_id.toString())
+                    .collect(Collectors.joining(","))
+                )
+            ).all()
+        ){
+            oIdToOEntryD.put(row.getInt("o_id"), row.getInstant("o_entry_d").toString());
+            oIdToOcId.put(row.getInt("o_id"), Integer.toString(row.getInt("o_c_id")));
+        }
+
+        // related customers
+        HashMap<String, Customer> cIdToCustomer = new HashMap<>();  // customer id
+        for (
+            Row row: this.session.execute(
+                String.format(
+                    "select * from wholesale.customer\n" +
+                    "where c_w_id = %s and c_d_id = %s and c_id in (%s)",
+                    this.w_id, this.d_id, String.join(",", oIdToOcId.values())
+                )
+            ).all()
+        ){
+            cIdToCustomer.put(
+                Integer.toString(row.getInt("c_id")), new Customer(
+                    row.getString("c_first"),
+                    row.getString("c_middle"),
+                    row.getString("c_last")
+                )
+            );
+        }
+
+        // related items
+        HashMap<String, String> iIdToItemName = new HashMap<>();  // item id
+        for (
+            Row row: this.session.execute(
+                String.format(
+                    "select * from wholesale.item\n" +
+                    "where i_id in (%s)",
+                    orderLinesResult.stream().map(ol -> ol.ol_i_id.toString())
+                    .collect(Collectors.joining(","))
+                )
+            ).all()
+        ){
+            iIdToItemName.put(
+                Integer.toString(row.getInt("i_id")),
+                row.getString("i_name")
+            );
+        }
+
+        // percentage
+        HashMap<Integer, Double> itemIdOrderCounter = new HashMap<>();
+        for (OrderLine orderLine: orderLinesResult) {
+            if (!itemIdOrderCounter.containsKey(orderLine.ol_i_id)){
+                itemIdOrderCounter.put(orderLine.ol_i_id, 1.0);
+                continue;
+            }
+            itemIdOrderCounter.put(
+                orderLine.ol_i_id,
+                itemIdOrderCounter.get(orderLine.ol_i_id) + 1
+            );
+        }
+
+
+        for (OrderLine ol: orderLinesResult) {
+            Customer c = cIdToCustomer.get(oIdToOcId.get(ol.ol_o_id));
+            System.out.printf(
+                    "(D_ID, W_ID, L, O_ID, O_ENTRY_D, C_FIRST, C_MIDDLE, C_LAST, I_NAME, OL_QUANTITY, percentage): " +
+                            "(%d, %d, %d, %d, %s, %s, %s, %s, %s, %d, %.2f)\n",
+                    this.d_id, this.w_id, this.l, ol.ol_o_id, oIdToOEntryD.get(ol.ol_o_id),
+                    c.c_first, c.c_middle, c.c_last, iIdToItemName.get(ol.ol_i_id.toString()),
+                    ol.ol_quantity, itemIdOrderCounter.get(ol.ol_i_id) / this.l
+            );
+        }
     }
 }
