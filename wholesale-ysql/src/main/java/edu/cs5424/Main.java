@@ -25,7 +25,7 @@ public class Main {
                 case "run":
                     Main main = new Main();
                     for (int i = 0; i < 1; i++) {
-                        String filename = "/Users/y.peng/Desktop/wholesale/project_files/xact_files/testD.txt";
+                        String filename = "/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt";
 //                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
 //                        String filename = String.format("./xact/%d.txt", i);
                         main.run(conn, filename);

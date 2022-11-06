@@ -145,7 +145,7 @@ public class DeliveryTransaction extends BaseTransaction {
 
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
-            System.out.println("-----------------------");
         }
+        System.out.println("-----------------------");
     }
 }

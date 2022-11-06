@@ -2,12 +2,10 @@ package edu.cs5424.transactions;
 
 import edu.cs5424.datatype.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
-import java.util.ArrayList;
 import java.sql.Date;
-import java.util.List;
+import java.util.*;
 
 public class NewOrderTransaction extends BaseTransaction {
     private final Connection conn;
@@ -46,6 +44,7 @@ public class NewOrderTransaction extends BaseTransaction {
         updateDistrict(); //increment D_NEXT_O_ID by 1
         queryClient(); //get C_LAST, C_CREDIT, C_DISCOUNT
         queryWarehouse(); //get W_TAX
+        createNewOrderTemp();
         boolean allLocal = true;
         int numItems = 0;
         double totalAmount = 0;
@@ -101,7 +100,8 @@ public class NewOrderTransaction extends BaseTransaction {
         }
 
         totalAmount = totalAmount * (1 + d_tax + w_tax) * (1 - c_discount);
-        createNewOrder(numItems, allLocal);
+//        createNewOrder(numItems, allLocal);
+        updateOrder(numItems, allLocal);
 
         System.out.printf("""
                         New Order Transaction Output
@@ -254,6 +254,34 @@ public class NewOrderTransaction extends BaseTransaction {
         pStmt.setInt(8, quantity);
         pStmt.setString(9, dist_info);
         pStmt.executeUpdate();
+    }
+
+    private void createNewOrderTemp() throws SQLException {
+        Date date = new Date(System.currentTimeMillis());
+        o_entry_d = String.valueOf(date);
+
+        PreparedStatement pStmt = conn.prepareStatement("""
+                INSERT INTO orders
+                VALUES (?, ?, ?, ?, null, null, null, ?)
+                """);
+        pStmt.setInt(1, w_id);
+        pStmt.setInt(2, d_id);
+        pStmt.setInt(3, n);
+        pStmt.setInt(4, c_id);
+        pStmt.setDate(5, date);
+        pStmt.executeUpdate();
+    }
+
+    private void updateOrder(int numItems, boolean allLocal) throws SQLException {
+        int o_all_local = 0;
+        if (allLocal) o_all_local = 1;
+
+        String query = String.format("""
+                UPDATE Orders
+                SET O_OL_CNT = %d, O_ALL_LOCAL = %d
+                WHERE O_W_ID = %d AND O_D_ID = %d AND O_ID = %d AND O_C_ID = %d
+                """, numItems, o_all_local, w_id, d_id, n, c_id);
+        executeSQL(query);
     }
 
     private void createNewOrder(int numItems, boolean allLocal) throws SQLException {

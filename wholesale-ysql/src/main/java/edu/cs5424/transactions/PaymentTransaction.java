@@ -27,11 +27,12 @@ public class PaymentTransaction extends BaseTransaction {
     public void execute() throws SQLException {
         System.out.println(String.format("------Payment: warehouse id: %d, district id: %d, customer id: %d------", this.w_id, this.d_id, this.c_id));
 
-        queryWarehouse();
+        query();
+//        queryWarehouse();
         updateWarehouse();
-        queryDistrict();
+//        queryDistrict();
         updateDistrict();
-        queryCustomer();
+//        queryCustomer();
         updateCustomer();
 
         System.out.printf("""
@@ -134,5 +135,44 @@ public class PaymentTransaction extends BaseTransaction {
                 WHERE C_W_ID = %d AND C_D_ID = %d AND C_ID = %d
                 """, payment, payment, w_id, d_id, c_id);
         executeSQL(query);
+    }
+
+    private void query() throws SQLException {
+        String query = String.format("""
+                SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP
+                    FROM (
+                    SELECT C_W_ID, C_D_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE
+                    FROM Customer
+                    WHERE C_W_ID = %d AND C_D_ID = %d
+                    ) AS c_new
+                JOIN District d ON c_new.c_d_id = d.d_id AND c_new.c_w_id = d_w_id
+                JOIN Warehouse w ON c_new.c_w_id = w.w_id
+                """, w_id, d_id);
+        ResultSet rs = executeSQLQuery(query);
+        rs.next();
+        c_first = rs.getString(1);
+        c_middle = rs.getString(2);
+        c_last = rs.getString(3);
+        c_street_1 = rs.getString(4);
+        c_street_2 = rs.getString(5);
+        c_city = rs.getString(6);
+        c_state = rs.getString(7);
+        c_zip = rs.getString(8);
+        c_phone = rs.getString(9);
+        c_since = rs.getString(10);
+        c_credit = rs.getString(11);
+        c_credit_lim = rs.getDouble(12);
+        c_discount = rs.getDouble(13);
+        c_balance = rs.getDouble(14);
+        d_street_1 = rs.getString(15);
+        d_street_2 = rs.getString(16);
+        d_city = rs.getString(17);
+        d_state = rs.getString(18);
+        d_zip = rs.getString(19);
+        w_street_1 = rs.getString(20);
+        w_street_2 = rs.getString(21);
+        w_city = rs.getString(22);
+        w_state = rs.getString(23);
+        w_zip = rs.getString(24);
     }
 }
