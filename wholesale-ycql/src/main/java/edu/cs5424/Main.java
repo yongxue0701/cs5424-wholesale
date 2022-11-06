@@ -8,6 +8,57 @@ import edu.cs5424.transactions.*;
 
 public class Main {
     public static void main(String[] args) {
+        DataProcessor processor;
+        CqlSession session;
+
+        if (args.length > 0) {
+            String bathPath = String.format("./scripts/ycql");
+
+            switch (args[0]) {
+                case "run":
+                    Main main = new Main();
+                    for (int i = 0; i < 1; i++) {
+                        String filename = String.format("./xact/demo.txt", i);
+                        main.run(filename);
+                    }
+                    break;
+                case "create":
+                    session = CqlSession
+                            .builder()
+                            .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
+                            .withLocalDatacenter("datacenter1")
+                            .build();
+                    processor = new DataProcessor(bathPath, session);
+                    processor.createTable();
+                    session.close();
+                    break;
+                case "drop":
+                    session = CqlSession
+                            .builder()
+                            .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
+                            .withLocalDatacenter("datacenter1")
+                            .withKeyspace("wholesale")
+                            .build();
+                    processor = new DataProcessor(bathPath, session);
+                    processor.dropTable();
+                    session.close();
+                    break;
+                case "load":
+                    session = CqlSession
+                            .builder()
+                            .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
+                            .withLocalDatacenter("datacenter1")
+                            .withKeyspace("wholesale")
+                            .build();
+                    processor = new DataProcessor(bathPath, session);
+                    processor.loadData();
+                    session.close();
+                    break;
+            }
+        }
+    }
+
+    public void run(String path) {
         CqlSession session = CqlSession
                 .builder()
                 .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
@@ -15,42 +66,12 @@ public class Main {
                 .withKeyspace("wholesale")
                 .build();
 
-        if (args.length == 0) {
-//            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
-            String bathPath = String.format("./scripts/ycql");
-            DataProcessor processor = new DataProcessor(session, bathPath);
-
-            String cmd = "run";
-            switch (cmd) {
-                case "run":
-                    Main main = new Main();
-                    for (int i = 0; i < 1; i++) {
-//                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
-                        String filename = String.format("./xact/%d.txt", i);
-                        main.run(session, filename);
-                    }
-                    break;
-                case "create":
-                    processor.createTable();
-                    break;
-                case "drop":
-                    processor.dropTable();
-                    break;
-                case "load":
-                    processor.loadData();
-                    break;
-            }
-        }
-    }
-
-    public void run(CqlSession session, String path) {
         try {
             BaseTransaction transaction = null;
 
-//            File file = new File(path);    //creates a new file instance
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
-            FileReader fr = new FileReader(file);   // reads the file
-            BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
+            File file = new File(path); // creates a new file instance
+            FileReader fr = new FileReader(file); // reads the file
+            BufferedReader br = new BufferedReader(fr); // creates a buffering character input stream
             String line;
 
             while ((line = br.readLine()) != null) {
