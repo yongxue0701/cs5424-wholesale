@@ -50,7 +50,7 @@ public class RelatedCustomerTransaction {
                             "left join order_line on order_line.OL_W_ID=orders.O_W_ID and order_line.OL_D_ID=orders.O_D_ID and order_line.OL_O_ID=orders.O_ID\n"+
                     ") as ol_this\n" +
                     "on ol_other.OL_I_ID=ol_this.OL_I_ID\n" +
-                    "group by ol_other.C_W_ID, ol_other.C_D_ID, ol_other.C_ID\n" +
+                    "group by ol_other.C_W_ID, ol_other.C_D_ID, ol_other.C_ID, ol_other.O_ID\n" +
                     "having count(*)>1", C_W_ID, C_W_ID, C_D_ID, C_ID));
 
             while(rs.next()){
