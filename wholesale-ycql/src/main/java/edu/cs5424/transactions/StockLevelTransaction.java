@@ -9,10 +9,11 @@ public class StockLevelTransaction extends BaseTransaction {
     private final String QUERY_GET_NEXT_ORDER_ID = "SELECT d_next_o_id FROM wholesale.district " +
             "WHERE d_w_id = %d " +
             "AND d_id = %d;";
-    private final String QUERY_GET_LAST_L_ORDERS = "SELECT o_id FROM wholesale.orders " +
+    private final String QUERY_GET_LAST_L_ORDERS = "SELECT o_id FROM orders " +
             "WHERE o_w_id = %d " +
             "AND o_d_id = %d " +
-            "AND o_id IN (%s);";
+            "AND o_id >= %d " +
+            "AND o_id < %d;";
     private final String QUERY_GET_ITEM_IDS = "SELECT ol_i_id FROM wholesale.order_line " +
             "WHERE ol_w_id = %d " +
             "AND ol_d_id = %d " +
@@ -54,14 +55,7 @@ public class StockLevelTransaction extends BaseTransaction {
                 System.out.printf("Invalid Next Order ID, Warehouse ID: %d, District ID: %d\n", this.warehouseID, this.districtID);
             }
 
-            List<String> orderIDs = new ArrayList<>();
-            for (int i = nextOrderID - this.numOfLastOrders; i < nextOrderID; i++) {
-                Integer orderID = new Integer(i);
-                orderIDs.add(orderID.toString());
-            }
-            String orderIDRange = String.join(",", orderIDs);
-
-            ResultSet lastOrders = this.session.execute(String.format(QUERY_GET_LAST_L_ORDERS, this.warehouseID, this.districtID, orderIDRange));
+            ResultSet lastOrders = this.session.execute(String.format(QUERY_GET_LAST_L_ORDERS, this.warehouseID, this.districtID, nextOrderID - this.numOfLastOrders, nextOrderID));
             for (Row row : lastOrders.all()) {
                 ResultSet items = this.session.execute(String.format(QUERY_GET_ITEM_IDS, this.warehouseID, this.districtID, row.getInt("o_id")));
 
