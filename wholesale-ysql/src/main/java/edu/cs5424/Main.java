@@ -11,12 +11,40 @@ public class Main {
     public static void main(String[] args) throws ClassNotFoundException, SQLException {
         Class.forName("org.postgresql.Driver");
         Connection conn = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/postgres",
-                "postgres",
-                "root");
+                "jdbc:postgresql://localhost:5433/yugabyte",
+                "yugabyte",
+                "yugabyte");
 
+        if (args.length > 0) {
+//            String bathPath = String.format("%s/src/main/resources/scripts/", System.getProperty("user.dir"));
+            String bathPath = String.format("./scripts/");
+            DataProcessor processor = new DataProcessor(conn, bathPath);
+
+            switch (args[0]) {
+                case "run":
+                    Main main = new Main();
+                    for (int i = 0; i <= 19; i++) {
+//                        String filename = String.format("%s/src/main/resources/xact/%d.txt", System.getProperty("user.dir"), i);
+                        String filename = String.format("./xact/%d.txt", i);
+                        main.run(conn, filename);
+                    }
+                    break;
+                case "create":
+                    processor.createTable();
+                    break;
+                case "drop":
+                    processor.dropTable();
+                    break;
+                case "load":
+                    processor.loadData();
+                    break;
+            }
+        }
+    }
+
+    public void run(Connection conn, String path) throws SQLException {
         try {
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
+            File file = new File(path);    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
             String line;
