@@ -7,6 +7,5 @@ wholesale-ycql/target
 wholesale-ycql/out
 wholesale-ysql/out
 input
-output
 *.csv
 *.txt
