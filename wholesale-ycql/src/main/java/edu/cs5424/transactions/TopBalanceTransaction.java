@@ -14,13 +14,13 @@ public class TopBalanceTransaction {
         try {
             statement = connection.prepareStatement(
                     "select c_first, c_middle, c_last, c_balance, w_name, d_name from (\n" +
-                    "    select c_w_id, c_d_id, c_first, c_middle, c_last, c_balance\n" +
+                    "    select c_w_id, c_first, c_middle, c_last, c_balance\n" +
                     "    from customer\n" +
                     "    order by c_balance desc\n" +
                     "    limit 10\n" +
                     ") as c_new\n" +
-                    "join district d on c_new.c_d_id = d.d_id and c_new.c_w_id = d.d_w_id\n" +
-                    "join warehouse on c_new.c_w_id = warehouse.w_id"
+                    "left join warehouse on c_new.c_w_id = warehouse.w_id\n" +
+                    "left join district d on d.d_w_id = warehouse.w_id;"
             );
         } catch (SQLException e) {
             e.printStackTrace();
