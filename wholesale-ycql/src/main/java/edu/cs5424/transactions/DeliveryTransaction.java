@@ -8,18 +8,14 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 public class DeliveryTransaction {
     private final int w_id;
     private final int carrier_id;
     CqlSession session;
-
     private PreparedStatement order_pstmt;
     private PreparedStatement order_carrier_pstmt;
-
     private PreparedStatement customer_pstmt;
-
     private PreparedStatement order_lines_amount_pstmt;
     private PreparedStatement order_lines_pstmt;
     private PreparedStatement customer_update_pstmt;
@@ -49,8 +45,8 @@ public class DeliveryTransaction {
         );
         SimpleStatement order_lines =
                 SimpleStatement.builder("UPDATE order_line " +
-                                "SET ol_delivery_d = ? " +
-                                "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number IN ( ? );")
+                                "SET ol_delivery_d = (dateof(now())) " +
+                                "WHERE ol_w_id = ? AND ol_d_id = ? AND ol_o_id = ? AND ol_number = ?;")
                         .setConsistencyLevel(DefaultConsistencyLevel.ONE)
                         .build();
         order_lines_pstmt = session.prepare(order_lines);
@@ -91,16 +87,10 @@ public class DeliveryTransaction {
             //update the order with carrier
             session.execute(order_carrier_pstmt.bind(carrier_id, w_id, d_id, o_id));
             //update order-lines with delivery date
-            Date ol_delivery_d = new Date();
 
-            StringBuilder sb = new StringBuilder();
             for (int i = 1; i <= o_ol_cnt; i++) {
-                sb.append(i);
-                sb.append(',');
+                session.execute(order_lines_pstmt.bind(w_id, d_id, o_id, i));
             }
-            sb.deleteCharAt(sb.length() - 1);
-            session.execute(order_lines_pstmt.bind(ol_delivery_d, w_id, d_id, o_id, sb.toString()));
-
 
             //update customer balance and deliver count
             ResultSet customer = session.execute(customer_pstmt.bind(w_id, d_id, c_id));
@@ -117,7 +107,6 @@ public class DeliveryTransaction {
 
             System.out.printf("(W_ID, D_ID, C_ID, O_ID): (%d, %d, %d, %d)\n",
                     w_id, d_id, o_id, c_id);
-
         }
     }
 }
