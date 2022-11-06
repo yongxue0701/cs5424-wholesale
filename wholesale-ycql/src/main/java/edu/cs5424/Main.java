@@ -16,7 +16,7 @@ public class Main {
                 .build();
 
         try {
-            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/test.txt");    //creates a new file instance
+            File file = new File("/Users/y.peng/Desktop/wholesale/project_files/xact_files/testD.txt");    //creates a new file instance
             FileReader fr = new FileReader(file);   // reads the file
             BufferedReader br = new BufferedReader(fr);  // creates a buffering character input stream
             String line;
@@ -34,18 +34,18 @@ public class Main {
 //                        PaymentTransaction transactionP = new PaymentTransaction(session, parameters);
 //                        transactionP.execute();
 //                        break;
-//                    case "D":
-//                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
-//                        transactionD.execute();
+                    case "D":
+                        DeliveryTransaction transactionD = new DeliveryTransaction(session, parameters);
+                        transactionD.execute();
+                        break;
+//                    case "O":
+//                        OrderStatusTransaction transactionO = new OrderStatusTransaction(session, parameters);
+//                        transactionO.execute();
 //                        break;
-                    case "O":
-                        OrderStatusTransaction transactionO = new OrderStatusTransaction(session, parameters);
-                        transactionO.execute();
-                        break;
-                    case "S":
-                        StockLevelTransaction transactionS = new StockLevelTransaction(session, parameters);
-                        transactionS.execute();
-                        break;
+//                    case "S":
+//                        StockLevelTransaction transactionS = new StockLevelTransaction(session, parameters);
+//                        transactionS.execute();
+//                        break;
 //                    case "I":
 //                        PopularItemTransaction transactionI = new PopularItemTransaction(session, parameters);
 //                        transactionI.execute();
@@ -54,10 +54,10 @@ public class Main {
 //                        TopBalanceTransaction transactionT = new TopBalanceTransaction(session, parameters);
 //                        transactionT.execute();
 //                        break;
-                    case "R":
-                        RelatedCustomerTransaction transactionR = new RelatedCustomerTransaction(session, parameters);
-                        transactionR.execute();
-                        break;
+//                    case "R":
+//                        RelatedCustomerTransaction transactionR = new RelatedCustomerTransaction(session, parameters);
+//                        transactionR.execute();
+//                        break;
                     default:
                         break;
                 }
